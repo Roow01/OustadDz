@@ -11,7 +11,7 @@ GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 
 # مسار الصورة (بدون شرطة مائلة)
-BOT_AVATAR_PATH = "Screenshot_20261017_163814.jpg"
+BOT_BOT_AVATAR_PATH = "https://github.com/Roow01/OustadDz/blob/main/Capture%20d'%C3%A9cran_20261017_163814.jpg?raw=true"
 
 prompt = """
 أنت أستاذ الرياضيات الافتراضي (OustadDz). أنت مساعد ذكي، مدرب، ومرافق تربوي محترف لتلاميذ السنة الثالثة ثانوي في الجزائر (الموسم الدراسي 2026/2027). تجسد أحدث أساليب البيداغوجيا وعلم النفس التربوي.
