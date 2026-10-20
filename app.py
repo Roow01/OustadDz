@@ -8,7 +8,7 @@ import requests
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 
-# رابط الصورة الجديدة
+# رابط الصورة
 BOT_AVATAR_PATH = "https://raw.githubusercontent.com/Roow01/OustadDz/main/Gemini_Generated_Image_9ccjp9ccjp9ccjp9.jpeg"
 
 prompt = """
@@ -18,8 +18,8 @@ prompt = """
 
 1. قفل الهوية والتحية (مرة واحدة فقط):
 - أنت أستاذ رياضيات فقط. يُمنع منعاً باتاً ذكر أي مادة أخرى (فيزياء، فلسفة، لغات). إذا سألك التلميذ عن مادة أخرى، اعتذر بلطف وقل أنا متخصص في الرياضيات فقط.
-- في أول رسالة فقط، رحب بالتلميذ واطلب اسمه وشعبته، وذكره أنك مساعد مكمل.
-- يُمنع منعاً باتاً سؤال التلميذ عن اسمه أو جنسه أو شعبته مرة أخرى بعد أن ذكرها.
+- في أول رسالة فقط، رحب بالتلميذ واطلب اسمه وشعبته.
+- يُمنع منعاً باتاً سؤال التلميذ عن اسمه أو جنسه أو شعبته مرة أخرى.
 
 2. الذكاء السلوكي (التذكير والتأنيث):
 - إذا كان الاسم مؤنثاً (نسرين، مريم، سارة، مروة...) أو صرحت بذلك، خاطبها بصيغة المؤنث (أهلاً بكِ، مساعدتِك، فهمتِ، أحسنتِ، تريدين).
@@ -29,7 +29,7 @@ prompt = """
 
 4. البيداغوجيا والبروتوكول التدريبي (Coaching):
 - اشرح المفهوم بتبسيط، أعطِ مثالاً محلولاً خطوة بخطوة، ثم اطرح سؤالاً قصيراً للتأكد من الفهم.
-- إذا أخطأ التلميذ، وجهه بلطف ليكتشف الخطأ بنفسه. استخدم عبارات التشجيع.
+- إذا أخطأ التلميذ، وجهه بلطف ليكتشف الخطأ بنفسه.
 
 5. التصميم البصري للشرح (مهم جداً):
 - استخدم العناوين البارزة (مثل ###) لتقسيم الدروس.
@@ -53,7 +53,6 @@ prompt = """
 - اطرح تمارين من مواضيع البكالوريا السابقة، وانتظر الحل، ثم صحح خطوة بخطوة.
 
 10. الدعم النفسي التربوي:
-- أنت لست طبيباً نفسياً. يُمنع التشخيص الطبي.
 - إذا لاحظت توتراً، توقف فوراً، طمئنه بأسلوب أبوي حنون، وقدم له نصائح للتهدئة.
 
 11. الإيجاز:
@@ -126,7 +125,7 @@ def chat_response(message, history):
     except Exception as e:
         return "حدث خطأ غير متوقع. يرجى المحاولة."
 
-# ✅ التصميم المريح للعين (خلفية بيضاء، خط أكبر، فقاعات واضحة)
+# ✅ التصميم المريح للعين
 custom_css = """
 footer {visibility: hidden !important;}
 body, .gradio-container { background-color: #ffffff !important; }
@@ -146,7 +145,6 @@ body, .gradio-container { background-color: #ffffff !important; }
     color: #000 !important;
     border: 1px solid #e0e0e0 !important;
 }
-/* تحسين خانة الإدخال */
 textarea {
     border-radius: 12px !important;
     border: 2px solid #d0d0d0 !important;
@@ -157,14 +155,14 @@ textarea {
 .katex-display { font-size: 1.2em !important; margin: 15px 0 !important; }
 """
 
-# ✅ تفعيل الذاكرة الدائمة (BrowserState)
-chat_history_state = gr.BrowserState(default_value=[], storage_key="oustad_dz_history")
+# ✅ الحل الجذري للذاكرة: استخدام BrowserState (الطريقة الصحيحة)
+chat_history_state = gr.BrowserState(default_value=[], storage_key="oustad_dz_chat_history")
 
 with gr.Blocks(css=custom_css, theme=gr.themes.Soft()) as demo:
     gr.Markdown("<h1 style='text-align: center;'>OustadDz - أستاذ الرياضيات</h1>")
     
     chatbot = gr.Chatbot(
-        value=chat_history_state.value, # تحميل المحادثة السابقة عند الفتح
+        value=chat_history_state.value,
         avatar_images=(None, BOT_AVATAR_PATH),
         latex_delimiters=[
             {"left": "$$", "right": "$$", "display": True},
@@ -187,8 +185,7 @@ with gr.Blocks(css=custom_css, theme=gr.themes.Soft()) as demo:
     # حفظ أي تغيير في المحادثة داخل متصفح المستخدم
     chatbot.change(lambda x: x, chatbot, chat_history_state)
     
-    # ✅ التوقيع مع الإصدار v1.0
-    gr.HTML("<div translate='no' style='text-align: center; margin-top: 20px; font-weight: bold; color: #666; font-size: 15px;'>Built by Mana Redouane | v2.0</div>")
+    gr.HTML("<div translate='no' style='text-align: center; margin-top: 20px; font-weight: bold; color: #666; font-size: 15px;'>Built by Mana Redouane | v1.0</div>")
 
 # ✅ تفعيل PWA (التثبيت على الهاتف) + الاستضافة
 demo.queue().launch(server_name="0.0.0.0", server_port=int(os.environ.get("PORT", 7860)), pwa=True)
