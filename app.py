@@ -8,8 +8,8 @@ import requests
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 
-# رابط الصورة المباشر
-BOT_AVATAR_PATH = "https://github.com/Roow01/OustadDz/blob/main/Capture%20d'%C3%A9cran_20261017_163814.jpg?raw=true"
+# رابط الصورة المباشر (تم تصحيحه)
+BOT_AVATAR_PATH = "https://raw.githubusercontent.com/Roow01/OustadDz/main/Capture%20d'%C3%A9cran_20261017_163814.jpg"
 
 prompt = """
 أنت أستاذ الرياضيات الافتراضي (OustadDz). أنت مساعد ذكي ومرافق تربوي لتلاميذ الثالثة ثانوي في الجزائر (2026/2027).
@@ -110,8 +110,7 @@ with gr.Blocks(css=custom_css) as demo:
             latex_delimiters=[
                 {"left": "$$", "right": "$$", "display": True},
                 {"left": "$", "right": "$", "display": False}
-            ],
-            save_history=True
+            ]
         )
     )
     gr.HTML("<div translate='no' style='text-align: center; margin-top: 20px; font-weight: bold; color: #666; font-size: 15px;'>Built by Mana Redouane</div>")
