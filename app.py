@@ -3,13 +3,14 @@ import gradio as gr
 from google import genai
 from google.genai import types
 import requests
+import base64
 
 # المفاتيح من إعدادات Render
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 
-# رابط الصورة (Avatar)
-BOT_AVATAR_PATH = "https://raw.githubusercontent.com/Roow01/OustadDz/main/Gemini_Generated_Image_9ccjp9ccjp9ccjp9.jpeg"
+# ✅ استخدام الاسم الأصلي للصورة الذي رفعته أنت
+BOT_AVATAR_PATH = "Gemini_Generated_Image_9ccjp9ccjp9ccjp9.jpeg"
 
 prompt = """
 أنت أستاذ الرياضيات الافتراضي (OustadDz). أنت مساعد ذكي، مدرب، ومرافق تربوي محترف لتلاميذ السنة الثالثة ثانوي في الجزائر (الموسم الدراسي 2026/2027).
@@ -38,25 +39,9 @@ prompt = """
 - ضع القواعد الهامة داخل صناديق مميزة باستخدام علامة (>) (Blockquote).
 
 6. التدرج السنوي الرسمي المفصل (2026/2027):
-- الشعب العلمية (رياضيات، تقني رياضي، علوم تجريبية):
-  * الدوال العددية: دراسة النهايات، الاستمرارية، الاشتقاقية، والتزايد المقارن.
-  * الدالتان الأسية واللوغاريتمية: التوسع التام، المعادلات التفاضلية (لرياضيات)، الخواص والتطبيقات (لعلوم وتقني).
-  * المتتاليات العددية: المتتاليات، التراجع، الاستدلال بالتراجع، والنهايات.
-  * الحساب والتكامل: الدوال الأصلية والحساب التكاملي (موسع للرياضيات، بسيط للعلوم).
-  * الأعداد المركبة: مع التحويلات النقطية (لرياضيات وتقني)، دون التحويلات (لعلوم تجريبية).
-  * الهندسة في الفضاء: الجداء السلمي، معادلات المستويات والمستقيمات، المقاطع.
-  * الحساب (الموافقات): مقررة بالكامل لرياضيات وتقني (مبرهنة غوص وغوس)، غير مقررة لعلوم تجريبية.
-  * الاحتمالات والإحصاء: الاحتمالات الشرطية، المتغيرات العشوائية، والتوزيعات.
-- شعبة تسيير واقتصاد:
-  * الدوال العددية: دراسة السلوك المقارب والدوال وتطبيقاتها الاقتصادية (كلفة، هامش، إيراد).
-  * الدالة الأسية واللوغاريتمية.
-  * المتتاليات الحسابية والهندسية وتطبيقاتها في الفوائد والنمو الاقتصادي.
-  * الإحصاء والاحتمالات: السلاسل الإحصائية لمتغيرين (تعديل خطي، المربعات الدنيا)، الاحتمالات الشرطية وشجرة الاحتمالات.
-  * المصفوفات والأنظمة: الحساب المصروفي وحل جمل معادلات خطية.
-- الشعب الأدبية (آداب وفلسفة، لغات أجنبية):
-  * القسمة الإقليدية والموافقات في Z: خصائص القسمة والموافقات بمدول n، تطبيق الموافقات في إيجاد بواقي القوى وتحديد أيام الأسبوع.
-  * المتتاليات الحسابية والهندسية: تعريف، حدود، ومجموع.
-  * الدوال العددية: دراسة دوال كثيرة الحدود من الدرجة الثانية والثالثة، قراءة المنحنيات وجداول التغيرات.
+- الشعب العلمية (رياضيات، تقني رياضي، علوم تجريبية): المتتاليات، الاستمرارية والاشتقاقية، النهايات، الدوال الأسية واللوغاريتمية، الدوال الأصلية والتكامل، الأعداد المركبة (مع التحويلات لرياضيات وتقني)، الهندسة، الحساب (القسمة والموافقات)، الإحصاء والاحتمالات.
+- تسيير واقتصاد: الدوال، المتتاليات، الإحصاء، الاحتمالات، المصفوفات.
+- آداب وفلسفة ولغات أجنبية: الموافقات، المتتاليات، الدوال (درجة 2 و 3)، الإحصاء.
 
 7. الانتقال المباشر للشرح:
 - إذا طلب التلميذ درساً، اذكر عنوانه ومحتواه فوراً.
@@ -112,7 +97,7 @@ def call_groq(contents, system_instruction):
 
 def chat_response(message, history):
     try:
-        # ✅ معالجة الصور بشكل صحيح (استخراج المسار من القاموس)
+        # معالجة الصور (تحويل إلى Base64 لتجنب مشاكل المسارات)
         if isinstance(message, dict):
             text_content = message.get("text", "")
             files = message.get("files", [])
@@ -120,11 +105,14 @@ def chat_response(message, history):
             if files:
                 image_path = files[0]
                 if client:
+                    with open(image_path, "rb") as f:
+                        image_bytes = f.read()
+                    
                     response = client.models.generate_content(
                         model="gemini-2.5-flash-lite",
                         contents=[
                             types.Part.from_text(text_content if text_content else "حلل هذه الصورة الرياضية واشرحها لي."),
-                            types.Part.from_image(image_path)
+                            types.Part.from_bytes(data=image_bytes, mime_type="image/jpeg")
                         ],
                         config=types.GenerateContentConfig(system_instruction=prompt, temperature=0.2)
                     )
@@ -191,13 +179,13 @@ with gr.Blocks() as demo:
     chat.saved_conversations.secret = "oustad_dz_secret_2026"
     chat.saved_conversations.storage_key = "_oustad_dz_saved_conversations"
     
-    gr.HTML("<div translate='no' style='text-align: center; margin-top: 20px; font-weight: bold; color: #666; font-size: 15px;'>Powered by Qimah Production | v6.0</div>")
+    gr.HTML("<div translate='no' style='text-align: center; margin-top: 20px; font-weight: bold; color: #666; font-size: 15px;'>Powered by Qimah Production | v8.0</div>")
 
 demo.queue().launch(
     server_name="0.0.0.0", 
     server_port=int(os.environ.get("PORT", 7860)), 
     pwa=True,
-    favicon_path=BOT_AVATAR_PATH,
+    favicon_path=BOT_AVATAR_PATH, # ✅ استخدام نفس المسار
     css=custom_css,
     theme=gr.themes.Soft()
 )
