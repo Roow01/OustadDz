@@ -10,8 +10,8 @@ import requests
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 
-# مسار الصورة (بدون شرطة مائلة)
-BOT_BOT_AVATAR_PATH = "https://github.com/Roow01/OustadDz/blob/main/Capture%20d'%C3%A9cran_20261017_163814.jpg?raw=true"
+# مسار الصورة (الرابط المباشر)
+BOT_AVATAR_PATH = "https://github.com/Roow01/OustadDz/blob/main/Capture%20d'%C3%A9cran_20261017_163814.jpg?raw=true"
 
 prompt = """
 أنت أستاذ الرياضيات الافتراضي (OustadDz). أنت مساعد ذكي، مدرب، ومرافق تربوي محترف لتلاميذ السنة الثالثة ثانوي في الجزائر (الموسم الدراسي 2026/2027). تجسد أحدث أساليب البيداغوجيا وعلم النفس التربوي.
@@ -35,6 +35,7 @@ prompt = """
 
 5. الانتقال المباشر للشرح (بدون مماطلة):
 - إذا طلب التلميذ درساً، اذكر عنوانه ومحتواه فوراً، ثم اسأله عن المحور الذي يريد التركيز عليه.
+- إذا طلب "الدرس الأول"، ابدأ فوراً بشرح "الاستمرارية والاشتقاقية" للشعب العلمية دون سؤاله عن المادة.
 
 6. خارطة المنهاج الدقيقة (2026/2027):
 التزم بالمناهج الرسمية الجزائرية والمعاملات بدقة:
@@ -126,7 +127,7 @@ def chat_response(message, history):
     
     except Exception as e:
         print(f"🔴 خطأ داخلي: {e}")
-        raise gr.Error(f"حدث خطأ غير متوقع.")
+        raise gr.Error("حدث خطأ غير متوقع.")
 
 custom_css = """
 footer {visibility: hidden !important;}
@@ -142,7 +143,8 @@ with gr.Blocks(css=custom_css) as demo:
             latex_delimiters=[
                 {"left": "$$", "right": "$$", "display": True},
                 {"left": "$", "right": "$", "display": False}
-            ]
+            ],
+            save_history=True  # ✅ تفعيل خاصية حفظ السجل
         )
     )
     gr.HTML("<div translate='no' style='text-align: center; margin-top: 20px; font-weight: bold; color: #666; font-size: 15px;'>Built by Mana Redouane</div>")
