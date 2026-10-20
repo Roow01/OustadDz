@@ -155,37 +155,26 @@ textarea {
 .katex-display { font-size: 1.2em !important; margin: 15px 0 !important; }
 """
 
-# ✅ الحل الجذري للذاكرة: استخدام BrowserState (الطريقة الصحيحة)
-chat_history_state = gr.BrowserState(default_value=[], storage_key="oustad_dz_chat_history")
-
+# ✅ الحل الصحيح: ChatInterface مع save_history و secret و storage_key
 with gr.Blocks(css=custom_css, theme=gr.themes.Soft()) as demo:
-    gr.Markdown("<h1 style='text-align: center;'>OustadDz - أستاذ الرياضيات</h1>")
-    
-    chatbot = gr.Chatbot(
-        value=chat_history_state.value,
-        avatar_images=(None, BOT_AVATAR_PATH),
-        latex_delimiters=[
-            {"left": "$$", "right": "$$", "display": True},
-            {"left": "$", "right": "$", "display": False}
-        ],
-        height=500
+    chat = gr.ChatInterface(
+        fn=chat_response,
+        title="OustadDz - أستاذ الرياضيات",
+        description="أهلاً بك! أنا أستاذك المساعد الافتراضي. تفضل، قول لي وش هو اسمك وش هي شعبتك باش ننطلقوا؟",
+        chatbot=gr.Chatbot(
+            avatar_images=(None, BOT_AVATAR_PATH),
+            latex_delimiters=[
+                {"left": "$$", "right": "$$", "display": True},
+                {"left": "$", "right": "$", "display": False}
+            ]
+        ),
+        save_history=True
     )
     
-    msg = gr.Textbox(placeholder="اكتب سؤالك هنا...", show_label=False, container=False)
+    # ✅ تعيين المفتاح السري و storage_key لحفظ المحادثات في متصفح المستخدم
+    chat.saved_conversations.secret = "oustad_dz_secret_2026"
+    chat.saved_conversations.storage_key = "_oustad_dz_saved_conversations"
     
-    def respond(message, history):
-        if not history:
-            history = []
-        bot_message = chat_response(message, history)
-        history.append((message, bot_message))
-        return "", history
+    gr.HTML("<div translate='no' style='text-align: center; margin-top: 20px; font-weight: bold; color: #666; font-size: 15px;'>Built by Mana Redouane | v4.0</div>")
 
-    msg.submit(respond, [msg, chatbot], [msg, chatbot])
-    
-    # حفظ أي تغيير في المحادثة داخل متصفح المستخدم
-    chatbot.change(lambda x: x, chatbot, chat_history_state)
-    
-    gr.HTML("<div translate='no' style='text-align: center; margin-top: 20px; font-weight: bold; color: #666; font-size: 15px;'>Built by Mana Redouane | v1.0</div>")
-
-# ✅ تفعيل PWA (التثبيت على الهاتف) + الاستضافة
 demo.queue().launch(server_name="0.0.0.0", server_port=int(os.environ.get("PORT", 7860)), pwa=True)
