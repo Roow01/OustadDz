@@ -33,7 +33,7 @@ prompt = """
 
 5. التصميم البصري للشرح (مهم جداً):
 - استخدم العناوين البارزة (مثل ###) لتقسيم الدروس.
-- استخدم الرموز التعبيرية (📌، 📊، ⚠️، ✅) لتوضيح النقاط وجعلها مريحة للعين.
+- استخدم الرموز التعبيرية (📌، 📊، ⚠️، ✅) لتوضيح النقاط.
 - ضع القواعد الهامة داخل صناديق مميزة باستخدام علامة (>) (Blockquote).
 
 6. التدرج السنوي الرسمي (2026/2027):
@@ -55,8 +55,8 @@ prompt = """
 10. الدعم النفسي التربوي:
 - إذا لاحظت توتراً، توقف فوراً، طمئنه بأسلوب أبوي حنون، وقدم له نصائح للتهدئة.
 
-11. الإيجاز:
-- كن مباشراً ومختصراً. يُمنع الإطالة أو تكرار النصائح في كل رسالة.
+11. تحليل الصور:
+- إذا أرسل التلميذ صورة لتمرين، قم بتحليلها بعناية واشرح الخطوات بالتفصيل.
 """
 
 try:
@@ -95,6 +95,26 @@ def call_groq(contents, system_instruction):
 
 def chat_response(message, history):
     try:
+        # معالجة الرسائل المتعددة (نص + صورة)
+        if isinstance(message, dict):
+            text_content = message.get("text", "")
+            files = message.get("files", [])
+            
+            if files:
+                # إرسال الصورة إلى Gemini للتحليل
+                image_path = files[0]
+                response = client.models.generate_content(
+                    model="gemini-2.5-flash-lite",
+                    contents=[
+                        types.Part.from_text(text_content if text_content else "حلل هذه الصورة الرياضية واشرحها لي."),
+                        types.Part.from_image(image_path)
+                    ],
+                    config=types.GenerateContentConfig(system_instruction=prompt, temperature=0.2)
+                )
+                return response.text if response.text else "عذراً، لم أتمكن من تحليل الصورة."
+            else:
+                message = text_content # إذا كان نصاً فقط
+
         if len(history) == 0:
             welcome_msg = "أهلاً بك! أنا أستاذك المساعد الافتراضي في الرياضيات للثالثة ثانوي. تفضل، قول لي وش هو اسمك وش هي شعبتك باش ننطلقوا؟"
             return welcome_msg
@@ -155,26 +175,22 @@ textarea {
 .katex-display { font-size: 1.2em !important; margin: 15px 0 !important; }
 """
 
-# ✅ الحل الصحيح: ChatInterface مع save_history و secret و storage_key
+# ✅ استخدام MultimodalTextbox لدعم الصور
 with gr.Blocks(css=custom_css, theme=gr.themes.Soft()) as demo:
-    chat = gr.ChatInterface(
+    gr.ChatInterface(
         fn=chat_response,
         title="OustadDz - أستاذ الرياضيات",
         description="أهلاً بك! أنا أستاذك المساعد الافتراضي. تفضل، قول لي وش هو اسمك وش هي شعبتك باش ننطلقوا؟",
+        multimodal=True,
+        textbox=gr.MultimodalTextbox(placeholder="اكتب سؤالك أو أرفق صورة لتمرين...", file_types=["image"]),
         chatbot=gr.Chatbot(
             avatar_images=(None, BOT_AVATAR_PATH),
             latex_delimiters=[
                 {"left": "$$", "right": "$$", "display": True},
                 {"left": "$", "right": "$", "display": False}
             ]
-        ),
-        save_history=True
+        )
     )
-    
-    # ✅ تعيين المفتاح السري و storage_key لحفظ المحادثات في متصفح المستخدم
-    chat.saved_conversations.secret = "oustad_dz_secret_2026"
-    chat.saved_conversations.storage_key = "_oustad_dz_saved_conversations"
-    
-    gr.HTML("<div translate='no' style='text-align: center; margin-top: 20px; font-weight: bold; color: #666; font-size: 15px;'>Built by Mana Redouane | v4.0</div>")
+    gr.HTML("<div translate='no' style='text-align: center; margin-top: 20px; font-weight: bold; color: #666; font-size: 15px;'>Powered by Qimah Production | v2.0</div>")
 
 demo.queue().launch(server_name="0.0.0.0", server_port=int(os.environ.get("PORT", 7860)), pwa=True)
