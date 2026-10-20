@@ -3,7 +3,6 @@ import gradio as gr
 from google import genai
 from google.genai import types
 import requests
-from pathlib import Path
 
 # المفاتيح من إعدادات Render
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
@@ -39,7 +38,7 @@ prompt = """
 - ضع القواعد الهامة داخل صناديق مميزة باستخدام علامة (>) (Blockquote).
 
 6. التدرج السنوي الرسمي المفصل (2026/2027):
-- **الشعب العلمية (رياضيات، تقني رياضي، علوم تجريبية):**
+- الشعب العلمية (رياضيات، تقني رياضي، علوم تجريبية):
   * الدوال العددية: دراسة النهايات، الاستمرارية، الاشتقاقية، والتزايد المقارن.
   * الدالتان الأسية واللوغاريتمية: التوسع التام، المعادلات التفاضلية (لرياضيات)، الخواص والتطبيقات (لعلوم وتقني).
   * المتتاليات العددية: المتتاليات، التراجع، الاستدلال بالتراجع، والنهايات.
@@ -48,13 +47,13 @@ prompt = """
   * الهندسة في الفضاء: الجداء السلمي، معادلات المستويات والمستقيمات، المقاطع.
   * الحساب (الموافقات): مقررة بالكامل لرياضيات وتقني (مبرهنة غوص وغوس)، غير مقررة لعلوم تجريبية.
   * الاحتمالات والإحصاء: الاحتمالات الشرطية، المتغيرات العشوائية، والتوزيعات.
-- **شعبة تسيير واقتصاد:**
+- شعبة تسيير واقتصاد:
   * الدوال العددية: دراسة السلوك المقارب والدوال وتطبيقاتها الاقتصادية (كلفة، هامش، إيراد).
   * الدالة الأسية واللوغاريتمية.
   * المتتاليات الحسابية والهندسية وتطبيقاتها في الفوائد والنمو الاقتصادي.
   * الإحصاء والاحتمالات: السلاسل الإحصائية لمتغيرين (تعديل خطي، المربعات الدنيا)، الاحتمالات الشرطية وشجرة الاحتمالات.
   * المصفوفات والأنظمة: الحساب المصروفي وحل جمل معادلات خطية.
-- **الشعب الأدبية (آداب وفلسفة، لغات أجنبية):**
+- الشعب الأدبية (آداب وفلسفة، لغات أجنبية):
   * القسمة الإقليدية والموافقات في Z: خصائص القسمة والموافقات بمدول n، تطبيق الموافقات في إيجاد بواقي القوى وتحديد أيام الأسبوع.
   * المتتاليات الحسابية والهندسية: تعريف، حدود، ومجموع.
   * الدوال العددية: دراسة دوال كثيرة الحدود من الدرجة الثانية والثالثة، قراءة المنحنيات وجداول التغيرات.
@@ -113,21 +112,25 @@ def call_groq(contents, system_instruction):
 
 def chat_response(message, history):
     try:
+        # ✅ معالجة الصور بشكل صحيح (استخراج المسار من القاموس)
         if isinstance(message, dict):
             text_content = message.get("text", "")
             files = message.get("files", [])
             
             if files:
                 image_path = files[0]
-                response = client.models.generate_content(
-                    model="gemini-2.5-flash-lite",
-                    contents=[
-                        types.Part.from_text(text_content if text_content else "حلل هذه الصورة الرياضية واشرحها لي."),
-                        types.Part.from_image(image_path)
-                    ],
-                    config=types.GenerateContentConfig(system_instruction=prompt, temperature=0.2)
-                )
-                return response.text if response.text else "عذراً، لم أتمكن من تحليل الصورة."
+                if client:
+                    response = client.models.generate_content(
+                        model="gemini-2.5-flash-lite",
+                        contents=[
+                            types.Part.from_text(text_content if text_content else "حلل هذه الصورة الرياضية واشرحها لي."),
+                            types.Part.from_image(image_path)
+                        ],
+                        config=types.GenerateContentConfig(system_instruction=prompt, temperature=0.2)
+                    )
+                    return response.text if response.text else "عذراً، لم أتمكن من تحليل الصورة."
+                else:
+                    return "عذراً، خدمة تحليل الصور غير متاحة حالياً."
             else:
                 message = text_content
 
@@ -144,9 +147,6 @@ def chat_response(message, history):
                     conversation_context += f"Student: {content}\n"
                 elif role == "assistant":
                     conversation_context += f"OustadDz: {content}\n"
-            elif isinstance(item, (list, tuple)) and len(item) == 2:
-                user_msg, bot_msg = item
-                conversation_context += f"Student: {user_msg}\nOustadDz: {bot_msg}\n"
         
         conversation_context += f"Student: {message}\nOustadDz:"
 
@@ -164,29 +164,10 @@ def chat_response(message, history):
 custom_css = """
 footer {visibility: hidden !important;}
 body, .gradio-container { background-color: #ffffff !important; }
-.message-wrap .message { 
-    font-size: 17px !important; 
-    line-height: 1.8 !important; 
-    border-radius: 16px !important;
-    padding: 16px 20px !important;
-    margin-bottom: 15px !important;
-}
-.message-wrap .message.user { 
-    background-color: #e3f2fd !important; 
-    color: #000 !important;
-}
-.message-wrap .message.bot { 
-    background-color: #f7f7f7 !important; 
-    color: #000 !important;
-    border: 1px solid #e0e0e0 !important;
-}
-textarea {
-    border-radius: 12px !important;
-    border: 2px solid #d0d0d0 !important;
-    padding: 15px !important;
-    font-size: 16px !important;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05) !important;
-}
+.message-wrap .message { font-size: 17px !important; line-height: 1.8 !important; border-radius: 16px !important; padding: 16px 20px !important; margin-bottom: 15px !important; }
+.message-wrap .message.user { background-color: #e3f2fd !important; color: #000 !important; }
+.message-wrap .message.bot { background-color: #f7f7f7 !important; color: #000 !important; border: 1px solid #e0e0e0 !important; }
+textarea { border-radius: 12px !important; border: 2px solid #d0d0d0 !important; padding: 15px !important; font-size: 16px !important; box-shadow: 0 2px 5px rgba(0,0,0,0.05) !important; }
 .katex-display { font-size: 1.2em !important; margin: 15px 0 !important; }
 """
 
@@ -196,7 +177,6 @@ with gr.Blocks() as demo:
         title="OustadDz - أستاذ الرياضيات",
         description="أهلاً بك! أنا أستاذك المساعد الافتراضي. تفضل، قول لي وش هو اسمك وش هي شعبتك باش ننطلقوا؟",
         multimodal=True,
-        
         textbox=gr.MultimodalTextbox(placeholder="اكتب سؤالك أو أرفق صورة لتمرين...", file_types=["image"]),
         chatbot=gr.Chatbot(
             avatar_images=(None, BOT_AVATAR_PATH),
@@ -211,7 +191,7 @@ with gr.Blocks() as demo:
     chat.saved_conversations.secret = "oustad_dz_secret_2026"
     chat.saved_conversations.storage_key = "_oustad_dz_saved_conversations"
     
-    gr.HTML("<div translate='no' style='text-align: center; margin-top: 20px; font-weight: bold; color: #666; font-size: 15px;'>Powered by Qimah Production | v5.0</div>")
+    gr.HTML("<div translate='no' style='text-align: center; margin-top: 20px; font-weight: bold; color: #666; font-size: 15px;'>Powered by Qimah Production | v6.0</div>")
 
 demo.queue().launch(
     server_name="0.0.0.0", 
