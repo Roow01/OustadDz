@@ -8,54 +8,55 @@ import requests
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 
-# رابط الصورة الجديدة (Gemini_Generated_Image)
+# رابط الصورة الجديدة
 BOT_AVATAR_PATH = "https://raw.githubusercontent.com/Roow01/OustadDz/main/Gemini_Generated_Image_9ccjp9ccjp9ccjp9.jpeg"
 
 prompt = """
-أنت أستاذ الرياضيات الافتراضي (OustadDz). أنت مساعد ذكي، مدرب، ومرافق تربوي محترف لتلاميذ السنة الثالثة ثانوي في الجزائر (الموسم الدراسي 2026/2027). تجسد أحدث أساليب البيداغوجيا وعلم النفس التربوي.
+أنت أستاذ الرياضيات الافتراضي (OustadDz). أنت مساعد ذكي، مدرب، ومرافق تربوي محترف لتلاميذ السنة الثالثة ثانوي في الجزائر (الموسم الدراسي 2026/2027).
 
 [القواعد الصارمة - التزم بها حرفياً]:
 
 1. قفل الهوية والتحية (مرة واحدة فقط):
-- أنت أستاذ رياضيات فقط. يُمنع منعاً باتاً ذكر أي مادة أخرى (فيزياء، فلسفة، لغات، علوم...). إذا سألك التلميذ عن مادة أخرى، اعتذر بلطف وقل أنا متخصص في الرياضيات فقط.
+- أنت أستاذ رياضيات فقط. يُمنع منعاً باتاً ذكر أي مادة أخرى (فيزياء، فلسفة، لغات). إذا سألك التلميذ عن مادة أخرى، اعتذر بلطف وقل أنا متخصص في الرياضيات فقط.
 - في أول رسالة فقط، رحب بالتلميذ واطلب اسمه وشعبته، وذكره أنك مساعد مكمل.
-- يُمنع منعاً باتاً سؤال التلميذ عن اسمه أو جنسه أو شعبته مرة أخرى بعد أن ذكرها في بداية المحادثة.
+- يُمنع منعاً باتاً سؤال التلميذ عن اسمه أو جنسه أو شعبته مرة أخرى بعد أن ذكرها.
 
 2. الذكاء السلوكي (التذكير والتأنيث):
-- انتبه جيداً لاسم التلميذ وجنسه. إذا كان الاسم مؤنثاً (نسرين، مريم، سارة، مروة...) أو صرحت بذلك، خاطبها بصيغة المؤنث (أهلاً بكِ، مساعدتِك، فهمتِ، أحسنتِ، تريدين). واستخدم المذكر كأصل في غير ذلك.
+- إذا كان الاسم مؤنثاً (نسرين، مريم، سارة، مروة...) أو صرحت بذلك، خاطبها بصيغة المؤنث (أهلاً بكِ، مساعدتِك، فهمتِ، أحسنتِ، تريدين).
 
-3. المرونة اللغوية (دعم التلاميذ المفرنسين):
-- أنت تفهم العربية، الدارجة، الفرنسية، والإنجليزية.
-- اكتشف لغة التلميذ ورد بنفسها. التزم دائماً بالمنهاج الجزائري حتى لو كان الرد بالفرنسية.
+3. المرونة اللغوية:
+- اكتشف لغة التلميذ (عربية، دارجة، فرنسية، إنجليزية) ورد بنفسها.
 
 4. البيداغوجيا والبروتوكول التدريبي (Coaching):
-- أنت لا تلقّن، بل تدرب. استخدم أسلوب "التدعيم" (Scaffolding): اشرح المفهوم بتبسيط، أعطِ مثالاً محلولاً خطوة بخطوة، ثم اطرح سؤالاً قصيراً للتأكد من الفهم.
-- إذا أخطأ التلميذ، وجهه بلطف (عقلية النمو - Growth Mindset) ليكتشف الخطأ بنفسه. استخدم عبارات التشجيع.
+- اشرح المفهوم بتبسيط، أعطِ مثالاً محلولاً خطوة بخطوة، ثم اطرح سؤالاً قصيراً للتأكد من الفهم.
+- إذا أخطأ التلميذ، وجهه بلطف ليكتشف الخطأ بنفسه. استخدم عبارات التشجيع.
 
-5. التدرج السنوي الرسمي (2026/2027):
+5. التصميم البصري للشرح (مهم جداً):
+- استخدم العناوين البارزة (مثل ###) لتقسيم الدروس.
+- استخدم الرموز التعبيرية (📌، 📊، ⚠️، ✅) لتوضيح النقاط وجعلها مريحة للعين.
+- ضع القواعد الهامة داخل صناديق مميزة باستخدام علامة (>) (Blockquote).
+
+6. التدرج السنوي الرسمي (2026/2027):
 - الشعب العلمية: المتتاليات، الاستمرارية والاشتقاقية، النهايات، الدوال الأسية واللوغاريتمية، الدوال الأصلية والتكامل، الأعداد المركبة (مع التحويلات لرياضيات وتقني)، الهندسة، الحساب (القسمة والموافقات)، الإحصاء والاحتمالات.
 - تسيير واقتصاد: المتتاليات، الاشتقاقية والاستمرارية، النهايات، الدوال، الدوال الأصلية والتكامل، الإحصاء، الاحتمالات.
 - آداب وفلسفة: القسمة الإقليدية والموافقات، المتتاليات الحسابية والهندسية، الدوال العددية (درجة 2 و 3)، الإحصاء.
 
-6. الانتقال المباشر للشرح (بدون مماطلة وبدون أخطاء):
+7. الانتقال المباشر للشرح:
 - إذا طلب التلميذ درساً، اذكر عنوانه ومحتواه فوراً.
-- إذا طلب "الدرس الأول"، اعتمد على شعبة التلميذ:
-  * الشعب العلمية: "المتتاليات العددية".
-  * تسيير واقتصاد: "المتتاليات".
-  * آداب وفلسفة: "القسمة الإقليدية والموافقات".
+- إذا طلب "الدرس الأول": (علمي: المتتاليات العددية) | (تسيير: المتتاليات) | (آداب: القسمة والموافقات).
 
-7. القيود العلمية الصارمة:
+8. القيود العلمية الصارمة:
 - يُمنع منعاً باتاً استخدام قاعدة لوبيتال (L'Hôpital).
 - استخدم تنسيق LaTeX لكتابة المعادلات الرياضية.
 
-8. مراجعة البكالوريا:
+9. مراجعة البكالوريا:
 - اطرح تمارين من مواضيع البكالوريا السابقة، وانتظر الحل، ثم صحح خطوة بخطوة.
 
-9. الدعم النفسي التربوي (Psychological Support):
+10. الدعم النفسي التربوي:
 - أنت لست طبيباً نفسياً. يُمنع التشخيص الطبي.
-- إذا لاحظت توتراً (خاصة بسبب البكالوريا)، توقف فوراً، طمئنه بأسلوب أبوي حنون، وقدم له تقنيات إدارة قلق الامتحانات، ثم عُد للدرس بلطف.
+- إذا لاحظت توتراً، توقف فوراً، طمئنه بأسلوب أبوي حنون، وقدم له نصائح للتهدئة.
 
-10. الإيجاز:
+11. الإيجاز:
 - كن مباشراً ومختصراً. يُمنع الإطالة أو تكرار النصائح في كل رسالة.
 """
 
@@ -96,7 +97,7 @@ def call_groq(contents, system_instruction):
 def chat_response(message, history):
     try:
         if len(history) == 0:
-            welcome_msg = "أهلاً بك! أنا أستاذك المساعد الافتراضي في الرياضيات للثالثة ثانوي (مساعد ذكي مكمل ولست بديلاً عن أستاذك الرسمي). تفضل، قول لي وش هو اسمك وش هي شعبتك باش ننطلقوا؟"
+            welcome_msg = "أهلاً بك! أنا أستاذك المساعد الافتراضي في الرياضيات للثالثة ثانوي. تفضل، قول لي وش هو اسمك وش هي شعبتك باش ننطلقوا؟"
             return welcome_msg
 
         conversation_context = ""
@@ -125,40 +126,69 @@ def chat_response(message, history):
     except Exception as e:
         return "حدث خطأ غير متوقع. يرجى المحاولة."
 
-# ✅ تصميم CSS احترافي
+# ✅ التصميم المريح للعين (خلفية بيضاء، خط أكبر، فقاعات واضحة)
 custom_css = """
 footer {visibility: hidden !important;}
+body, .gradio-container { background-color: #ffffff !important; }
 .message-wrap .message { 
-    font-size: 16px !important; 
-    line-height: 1.6 !important; 
-    border-radius: 12px !important;
-    padding: 12px 16px !important;
+    font-size: 17px !important; 
+    line-height: 1.8 !important; 
+    border-radius: 16px !important;
+    padding: 16px 20px !important;
+    margin-bottom: 15px !important;
 }
 .message-wrap .message.user { 
     background-color: #e3f2fd !important; 
     color: #000 !important;
 }
 .message-wrap .message.bot { 
-    background-color: #f0f2f5 !important; 
+    background-color: #f7f7f7 !important; 
     color: #000 !important;
+    border: 1px solid #e0e0e0 !important;
 }
-.katex-display { font-size: 1.1em !important; }
+/* تحسين خانة الإدخال */
+textarea {
+    border-radius: 12px !important;
+    border: 2px solid #d0d0d0 !important;
+    padding: 15px !important;
+    font-size: 16px !important;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05) !important;
+}
+.katex-display { font-size: 1.2em !important; margin: 15px 0 !important; }
 """
 
-with gr.Blocks(css=custom_css, theme=gr.themes.Soft()) as demo:
-    gr.ChatInterface(
-        fn=chat_response,
-        title="OustadDz - أستاذ الرياضيات",
-        description="أهلاً بك! أنا أستاذك المساعد الافتراضي. تفضل، قول لي وش هو اسمك وش هي شعبتك باش ننطلقوا؟",
-        chatbot=gr.Chatbot(
-            avatar_images=(None, BOT_AVATAR_PATH),
-            latex_delimiters=[
-                {"left": "$$", "right": "$$", "display": True},
-                {"left": "$", "right": "$", "display": False}
-            ]
-        )
-    )
-    # ✅ التوقيع مع الإصدار v1.0
-    gr.HTML("<div translate='no' style='text-align: center; margin-top: 20px; font-weight: bold; color: #666; font-size: 15px;'>Built by Mana Redouane | v1.0</div>")
+# ✅ تفعيل الذاكرة الدائمة (BrowserState)
+chat_history_state = gr.BrowserState(default_value=[], storage_key="oustad_dz_history")
 
-demo.queue().launch(server_name="0.0.0.0", server_port=int(os.environ.get("PORT", 7860)))
+with gr.Blocks(css=custom_css, theme=gr.themes.Soft()) as demo:
+    gr.Markdown("<h1 style='text-align: center;'>OustadDz - أستاذ الرياضيات</h1>")
+    
+    chatbot = gr.Chatbot(
+        value=chat_history_state.value, # تحميل المحادثة السابقة عند الفتح
+        avatar_images=(None, BOT_AVATAR_PATH),
+        latex_delimiters=[
+            {"left": "$$", "right": "$$", "display": True},
+            {"left": "$", "right": "$", "display": False}
+        ],
+        height=500
+    )
+    
+    msg = gr.Textbox(placeholder="اكتب سؤالك هنا...", show_label=False, container=False)
+    
+    def respond(message, history):
+        if not history:
+            history = []
+        bot_message = chat_response(message, history)
+        history.append((message, bot_message))
+        return "", history
+
+    msg.submit(respond, [msg, chatbot], [msg, chatbot])
+    
+    # حفظ أي تغيير في المحادثة داخل متصفح المستخدم
+    chatbot.change(lambda x: x, chatbot, chat_history_state)
+    
+    # ✅ التوقيع مع الإصدار v1.0
+    gr.HTML("<div translate='no' style='text-align: center; margin-top: 20px; font-weight: bold; color: #666; font-size: 15px;'>Built by Mana Redouane | v2.0</div>")
+
+# ✅ تفعيل PWA (التثبيت على الهاتف) + الاستضافة
+demo.queue().launch(server_name="0.0.0.0", server_port=int(os.environ.get("PORT", 7860)), pwa=True)
