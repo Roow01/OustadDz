@@ -8,7 +8,7 @@ import requests
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 
-# رابط الصورة المباشر (تم تصحيحه)
+# رابط الصورة المباشر (Raw)
 BOT_AVATAR_PATH = "https://raw.githubusercontent.com/Roow01/OustadDz/main/Capture%20d'%C3%A9cran_20261017_163814.jpg"
 
 prompt = """
@@ -96,8 +96,28 @@ def chat_response(message, history):
     except Exception as e:
         return "حدث خطأ غير متوقع. يرجى المحاولة."
 
+# ✅ تنسيق CSS الاحترافي (خط أكبر، حواف دائرية، ألوان مريحة)
 custom_css = """
 footer {visibility: hidden !important;}
+/* تنسيق فقاعات الرسائل */
+.message-wrap .message { 
+    font-size: 16px !important; 
+    line-height: 1.6 !important; 
+    border-radius: 12px !important;
+    padding: 12px 16px !important;
+}
+/* لون فقاعة المستخدم */
+.message-wrap .message.user { 
+    background-color: #e3f2fd !important; 
+    color: #000 !important;
+}
+/* لون فقاعة الوكيل */
+.message-wrap .message.bot { 
+    background-color: #f0f2f5 !important; 
+    color: #000 !important;
+}
+/* تنسيق المعادلات */
+.katex-display { font-size: 1.1em !important; }
 """
 
 with gr.Blocks(css=custom_css) as demo:
