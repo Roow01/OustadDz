@@ -196,7 +196,7 @@ with gr.Blocks() as demo:
         title="OustadDz - أستاذ الرياضيات",
         description="أهلاً بك! أنا أستاذك المساعد الافتراضي. تفضل، قول لي وش هو اسمك وش هي شعبتك باش ننطلقوا؟",
         multimodal=True,
-        type="messages",
+        
         textbox=gr.MultimodalTextbox(placeholder="اكتب سؤالك أو أرفق صورة لتمرين...", file_types=["image"]),
         chatbot=gr.Chatbot(
             avatar_images=(None, BOT_AVATAR_PATH),
