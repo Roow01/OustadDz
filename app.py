@@ -190,7 +190,7 @@ textarea {
 .katex-display { font-size: 1.2em !important; margin: 15px 0 !important; }
 """
 
-with gr.Blocks(css=custom_css, theme=gr.themes.Soft()) as demo:
+with gr.Blocks() as demo:
     chat = gr.ChatInterface(
         fn=chat_response,
         title="OustadDz - أستاذ الرياضيات",
@@ -217,5 +217,7 @@ demo.queue().launch(
     server_name="0.0.0.0", 
     server_port=int(os.environ.get("PORT", 7860)), 
     pwa=True,
-    favicon_path=BOT_AVATAR_PATH
+    favicon_path=BOT_AVATAR_PATH,
+    css=custom_css,
+    theme=gr.themes.Soft()
 )
