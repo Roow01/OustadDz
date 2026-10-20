@@ -161,14 +161,29 @@ def chat_response(message, history):
     except Exception as e:
         return "حدث خطأ غير متوقع. يرجى المحاولة."
 
+# ✅ تحسين CSS لجعل الواجهة أكثر تناسقاً (آمن)
 custom_css = """
 footer {visibility: hidden !important;}
 body, .gradio-container { background-color: #ffffff !important; }
-.message-wrap .message { font-size: 17px !important; line-height: 1.8 !important; border-radius: 16px !important; padding: 16px 20px !important; margin-bottom: 15px !important; }
+.message-wrap .message { 
+    font-size: 17px !important; 
+    line-height: 1.8 !important; 
+    border-radius: 16px !important; 
+    padding: 16px 20px !important; 
+    margin-bottom: 15px !important; 
+}
 .message-wrap .message.user { background-color: #e3f2fd !important; color: #000 !important; }
 .message-wrap .message.bot { background-color: #f7f7f7 !important; color: #000 !important; border: 1px solid #e0e0e0 !important; }
-textarea { border-radius: 12px !important; border: 2px solid #d0d0d0 !important; padding: 15px !important; font-size: 16px !important; box-shadow: 0 2px 5px rgba(0,0,0,0.05) !important; }
+textarea { 
+    border-radius: 12px !important; 
+    border: 2px solid #d0d0d0 !important; 
+    padding: 15px !important; 
+    font-size: 16px !important; 
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05) !important; 
+}
 .katex-display { font-size: 1.2em !important; margin: 15px 0 !important; }
+/* جعل الشات يأخذ ارتفاع الشاشة بشكل متناسق */
+.chatbot { height: 70vh !important; }
 """
 
 with gr.Blocks() as demo:
@@ -177,6 +192,7 @@ with gr.Blocks() as demo:
         title="OustadDz - أستاذ الرياضيات",
         description="أهلاً بك! أنا أستاذك المساعد الافتراضي. تفضل، قول لي وش هو اسمك وش هي شعبتك باش ننطلقوا؟",
         multimodal=True,
+        fill_height=True,  # ✅ لجعل التصميم متناسقاً (آمن)
         textbox=gr.MultimodalTextbox(placeholder="اكتب سؤالك أو أرفق صورة لتمرين...", file_types=["image"]),
         chatbot=gr.Chatbot(
             avatar_images=(None, BOT_AVATAR_PATH),
@@ -191,7 +207,8 @@ with gr.Blocks() as demo:
     chat.saved_conversations.secret = "oustad_dz_secret_2026"
     chat.saved_conversations.storage_key = "_oustad_dz_saved_conversations"
     
-    gr.HTML("<div translate='no' style='text-align: center; margin-top: 20px; font-weight: bold; color: #666; font-size: 15px;'>Powered by Qimah Production | v11.0</div>")
+    # ✅ تغيير رقم الإصدار إلى v1.0
+    gr.HTML("<div translate='no' style='text-align: center; margin-top: 20px; font-weight: bold; color: #666; font-size: 15px;'>Powered by Qimah Production | v1.0</div>")
 
 demo.queue().launch(
     server_name="0.0.0.0", 
