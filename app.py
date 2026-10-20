@@ -3,12 +3,13 @@ import gradio as gr
 from google import genai
 from google.genai import types
 import requests
+from pathlib import Path
 
 # المفاتيح من إعدادات Render
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 
-# رابط الصورة
+# رابط الصورة (Avatar)
 BOT_AVATAR_PATH = "https://raw.githubusercontent.com/Roow01/OustadDz/main/Gemini_Generated_Image_9ccjp9ccjp9ccjp9.jpeg"
 
 prompt = """
@@ -17,7 +18,8 @@ prompt = """
 [القواعد الصارمة - التزم بها حرفياً]:
 
 1. قفل الهوية والتحية (مرة واحدة فقط):
-- أنت أستاذ رياضيات فقط. يُمنع منعاً باتاً ذكر أي مادة أخرى (فيزياء، فلسفة، لغات). إذا سألك التلميذ عن مادة أخرى، اعتذر بلطف وقل أنا متخصص في الرياضيات فقط.
+- أنت أستاذ رياضيات فقط. يُمنع منعاً باتاً ذكر أي مادة أخرى (فيزياء، فلسفة). إذا سألك التلميذ عن مادة أخرى، اعتذر بلطف وقل أنا متخصص في الرياضيات فقط.
+- ملاحظة هامة جداً: إذا ذكر التلميذ كلمة "لغات" (مثل "أنا رضوان، لغات")، فهو يقصد شعبة اللغات الأجنبية (وهي شعبة دراسية)، وليس مادة اللغة. تعامل معه على أنه تلميذ في شعبة لغات أجنبية وقدم له الرياضيات الخاصة بشعبته.
 - في أول رسالة فقط، رحب بالتلميذ واطلب اسمه وشعبته.
 - يُمنع منعاً باتاً سؤال التلميذ عن اسمه أو جنسه أو شعبته مرة أخرى.
 
@@ -36,14 +38,30 @@ prompt = """
 - استخدم الرموز التعبيرية (📌، 📊، ⚠️، ✅) لتوضيح النقاط.
 - ضع القواعد الهامة داخل صناديق مميزة باستخدام علامة (>) (Blockquote).
 
-6. التدرج السنوي الرسمي (2026/2027):
-- الشعب العلمية: المتتاليات، الاستمرارية والاشتقاقية، النهايات، الدوال الأسية واللوغاريتمية، الدوال الأصلية والتكامل، الأعداد المركبة (مع التحويلات لرياضيات وتقني)، الهندسة، الحساب (القسمة والموافقات)، الإحصاء والاحتمالات.
-- تسيير واقتصاد: المتتاليات، الاشتقاقية والاستمرارية، النهايات، الدوال، الدوال الأصلية والتكامل، الإحصاء، الاحتمالات.
-- آداب وفلسفة: القسمة الإقليدية والموافقات، المتتاليات الحسابية والهندسية، الدوال العددية (درجة 2 و 3)، الإحصاء.
+6. التدرج السنوي الرسمي المفصل (2026/2027):
+- **الشعب العلمية (رياضيات، تقني رياضي، علوم تجريبية):**
+  * الدوال العددية: دراسة النهايات، الاستمرارية، الاشتقاقية، والتزايد المقارن.
+  * الدالتان الأسية واللوغاريتمية: التوسع التام، المعادلات التفاضلية (لرياضيات)، الخواص والتطبيقات (لعلوم وتقني).
+  * المتتاليات العددية: المتتاليات، التراجع، الاستدلال بالتراجع، والنهايات.
+  * الحساب والتكامل: الدوال الأصلية والحساب التكاملي (موسع للرياضيات، بسيط للعلوم).
+  * الأعداد المركبة: مع التحويلات النقطية (لرياضيات وتقني)، دون التحويلات (لعلوم تجريبية).
+  * الهندسة في الفضاء: الجداء السلمي، معادلات المستويات والمستقيمات، المقاطع.
+  * الحساب (الموافقات): مقررة بالكامل لرياضيات وتقني (مبرهنة غوص وغوس)، غير مقررة لعلوم تجريبية.
+  * الاحتمالات والإحصاء: الاحتمالات الشرطية، المتغيرات العشوائية، والتوزيعات.
+- **شعبة تسيير واقتصاد:**
+  * الدوال العددية: دراسة السلوك المقارب والدوال وتطبيقاتها الاقتصادية (كلفة، هامش، إيراد).
+  * الدالة الأسية واللوغاريتمية.
+  * المتتاليات الحسابية والهندسية وتطبيقاتها في الفوائد والنمو الاقتصادي.
+  * الإحصاء والاحتمالات: السلاسل الإحصائية لمتغيرين (تعديل خطي، المربعات الدنيا)، الاحتمالات الشرطية وشجرة الاحتمالات.
+  * المصفوفات والأنظمة: الحساب المصروفي وحل جمل معادلات خطية.
+- **الشعب الأدبية (آداب وفلسفة، لغات أجنبية):**
+  * القسمة الإقليدية والموافقات في Z: خصائص القسمة والموافقات بمدول n، تطبيق الموافقات في إيجاد بواقي القوى وتحديد أيام الأسبوع.
+  * المتتاليات الحسابية والهندسية: تعريف، حدود، ومجموع.
+  * الدوال العددية: دراسة دوال كثيرة الحدود من الدرجة الثانية والثالثة، قراءة المنحنيات وجداول التغيرات.
 
 7. الانتقال المباشر للشرح:
 - إذا طلب التلميذ درساً، اذكر عنوانه ومحتواه فوراً.
-- إذا طلب "الدرس الأول": (علمي: المتتاليات العددية) | (تسيير: المتتاليات) | (آداب: القسمة والموافقات).
+- إذا طلب "الدرس الأول": (علمي: المتتاليات العددية) | (تسيير: المتتاليات) | (آداب/لغات: القسمة والموافقات).
 
 8. القيود العلمية الصارمة:
 - يُمنع منعاً باتاً استخدام قاعدة لوبيتال (L'Hôpital).
@@ -95,13 +113,11 @@ def call_groq(contents, system_instruction):
 
 def chat_response(message, history):
     try:
-        # معالجة الرسائل المتعددة (نص + صورة)
         if isinstance(message, dict):
             text_content = message.get("text", "")
             files = message.get("files", [])
             
             if files:
-                # إرسال الصورة إلى Gemini للتحليل
                 image_path = files[0]
                 response = client.models.generate_content(
                     model="gemini-2.5-flash-lite",
@@ -113,7 +129,7 @@ def chat_response(message, history):
                 )
                 return response.text if response.text else "عذراً، لم أتمكن من تحليل الصورة."
             else:
-                message = text_content # إذا كان نصاً فقط
+                message = text_content
 
         if len(history) == 0:
             welcome_msg = "أهلاً بك! أنا أستاذك المساعد الافتراضي في الرياضيات للثالثة ثانوي. تفضل، قول لي وش هو اسمك وش هي شعبتك باش ننطلقوا؟"
@@ -145,7 +161,6 @@ def chat_response(message, history):
     except Exception as e:
         return "حدث خطأ غير متوقع. يرجى المحاولة."
 
-# ✅ التصميم المريح للعين
 custom_css = """
 footer {visibility: hidden !important;}
 body, .gradio-container { background-color: #ffffff !important; }
@@ -175,13 +190,13 @@ textarea {
 .katex-display { font-size: 1.2em !important; margin: 15px 0 !important; }
 """
 
-# ✅ استخدام MultimodalTextbox لدعم الصور
 with gr.Blocks(css=custom_css, theme=gr.themes.Soft()) as demo:
-    gr.ChatInterface(
+    chat = gr.ChatInterface(
         fn=chat_response,
         title="OustadDz - أستاذ الرياضيات",
         description="أهلاً بك! أنا أستاذك المساعد الافتراضي. تفضل، قول لي وش هو اسمك وش هي شعبتك باش ننطلقوا؟",
         multimodal=True,
+        type="messages",
         textbox=gr.MultimodalTextbox(placeholder="اكتب سؤالك أو أرفق صورة لتمرين...", file_types=["image"]),
         chatbot=gr.Chatbot(
             avatar_images=(None, BOT_AVATAR_PATH),
@@ -189,8 +204,18 @@ with gr.Blocks(css=custom_css, theme=gr.themes.Soft()) as demo:
                 {"left": "$$", "right": "$$", "display": True},
                 {"left": "$", "right": "$", "display": False}
             ]
-        )
+        ),
+        save_history=True
     )
-    gr.HTML("<div translate='no' style='text-align: center; margin-top: 20px; font-weight: bold; color: #666; font-size: 15px;'>Powered by Qimah Production | v2.0</div>")
+    
+    chat.saved_conversations.secret = "oustad_dz_secret_2026"
+    chat.saved_conversations.storage_key = "_oustad_dz_saved_conversations"
+    
+    gr.HTML("<div translate='no' style='text-align: center; margin-top: 20px; font-weight: bold; color: #666; font-size: 15px;'>Powered by Qimah Production | v5.0</div>")
 
-demo.queue().launch(server_name="0.0.0.0", server_port=int(os.environ.get("PORT", 7860)), pwa=True)
+demo.queue().launch(
+    server_name="0.0.0.0", 
+    server_port=int(os.environ.get("PORT", 7860)), 
+    pwa=True,
+    favicon_path=BOT_AVATAR_PATH
+)
