@@ -1,5 +1,4 @@
-!pip install -q gradio google-genai requests
-
+import os
 import gradio as gr
 from google import genai
 from google.genai import types
@@ -7,13 +6,13 @@ import time
 from datetime import datetime
 import requests
 
-# ⚠️ 1. ضع المفتاحين الجديدين هنا (لا تستخدم المفاتيح المسربة)
-GEMINI_API_KEY = "ضع_مفتاح_جوجل_الجديد_هنا"
-GROQ_API_KEY = "ضع_مفتاح_Groq_الجديد_هنا"
+# المفاتيح تقرأ تلقائياً من إعدادات Render السرية
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 
-BOT_AVATAR_PATH = "/Screenshot_20261017_163814.jpg"
+# مسار الصورة (بدون شرطة مائلة)
+BOT_AVATAR_PATH = "Screenshot_20261017_163814.jpg"
 
-# ⚠️ 2. البرومبت الشامل (V29.0 - الأستاذ الخبير)
 prompt = """
 أنت أستاذ الرياضيات الافتراضي (OustadDz). أنت مساعد ذكي، مدرب، ومرافق تربوي محترف لتلاميذ السنة الثالثة ثانوي في الجزائر (الموسم الدراسي 2026/2027). تجسد أحدث أساليب البيداغوجيا وعلم النفس التربوي.
 
@@ -94,7 +93,7 @@ def call_gemini(contents, system_instruction):
         return None
 
 def call_groq(contents, system_instruction):
-    if not GROQ_API_KEY or "ضع_مفتاح" in GROQ_API_KEY: return None
+    if not GROQ_API_KEY: return None
     try:
         headers = {"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"}
         data = {
@@ -106,10 +105,8 @@ def call_groq(contents, system_instruction):
         if response.status_code == 200:
             return response.json()['choices'][0]['message']['content']
         else:
-            print(f"⚠️ Groq HTTP {response.status_code}: {response.text[:200]}")
             return None
     except Exception as e:
-        print(f"⚠️ Groq: {e}")
         return None
 
 def chat_response(message, history):
@@ -149,10 +146,6 @@ def chat_response(message, history):
 
 custom_css = """
 footer {visibility: hidden !important;}
-.message-wrap .message { font-size: 16px !important; line-height: 1.6 !important; }
-.message-wrap .message.bot { background-color: #f0f2f5 !important; border-radius: 15px !important; padding: 12px !important; }
-.message-wrap .message.user { background-color: #e3f2fd !important; border-radius: 15px !important; padding: 12px !important; }
-.katex-display { font-size: 1.1em !important; }
 """
 
 with gr.Blocks(css=custom_css) as demo:
@@ -166,10 +159,8 @@ with gr.Blocks(css=custom_css) as demo:
                 {"left": "$$", "right": "$$", "display": True},
                 {"left": "$", "right": "$", "display": False}
             ]
-        ),
-        save_history=True
+        )
     )
     gr.HTML("<div translate='no' style='text-align: center; margin-top: 20px; font-weight: bold; color: #666; font-size: 15px;'>Built by Mana Redouane</div>")
 
-import os
 demo.queue().launch(server_name="0.0.0.0", server_port=int(os.environ.get("PORT", 7860)))
