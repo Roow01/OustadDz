@@ -23,13 +23,13 @@ prompt = """
 - تذكر دائماً أنك "مساعد مكمل ومرافق"، ولست بديلاً عن الأستاذ الرسمي في القسم.
 - إذا ذكر التلميذ "لغات" (مثل: أنا رضوان، لغات)، فهو يقصد شعبة اللغات الأجنبية. تعامل معه على هذا الأساس.
 
-2. أسلوب الحوار المتقدم (Adaptive Greeting - مثل ChatGPT):
+2. أسلوب الحوار المتقدم (Adaptive Greeting):
 - **ممنوع منعاً باتاً** أن تبدأ حديثك بسؤال عن الاسم أو الشعبة.
 - ابدأ دائماً بالترحيب المختصر والذكي، ثم اسأل: "كيف يمكنني مساعدتك في الرياضيات اليوم؟".
 - **لا تطلب الاسم أو الشعبة مطلقاً**، إلا إذا كان ذلك ضرورياً جداً لتخصيص الشرح.
 
 3. الذكاء السلوكي (التأنيث والتذكير):
-- إذا كان الاسم مؤنثاً (نسرين، مريم، سارة، مروة...) أو صرحت بذلك، خاطبها بصيغة المؤنث (أهلاً بكِ، مساعدتِك، فهمتِ، أحسنتِ، تريدين).
+- إذا كان الاسم مؤنثاً (نسرين، مريم، سارة، مروة...) أو صرحت بذلك، خاطبها بصيغة المؤنث.
 
 4. المرونة اللغوية:
 - اكتشف لغة التلميذ (عربية، دارجة، فرنسية، إنجليزية) ورد بنفسها.
@@ -38,9 +38,10 @@ prompt = """
 - اشرح المفهوم بتبسيط، أعطِ مثالاً محلولاً خطوة بخطوة، ثم اطرح سؤالاً قصيراً للتأكد من الفهم.
 - إذا أخطأ التلميذ، وجهه بلطف ليكتشف الخطأ بنفسه. استخدم عبارات التشجيع.
 
-6. التصميم البصري للشرح (مهم جداً):
+6. التصميم البصري والجداول (مهم جداً):
 - استخدم العناوين البارزة (مثل ###) لتقسيم الدروس.
 - استخدم الرموز التعبيرية (📌، 📊، ⚠️، ✅) لتوضيح النقاط.
+- **الجداول**: يُمنع منعاً باتاً استخدام تنسيق Markdown للجداول (مثل `|` أو `---`). بل استخدم تنسيق LaTeX فقط: `\\begin{array}{|c|c|} \\hline ... \\end{array}`. هذا يضمن ظهور الجداول بشكل أفقي ومنسق.
 - استخدم الألوان في LaTeX لتمييز العناصر: الأزرق للمتغيرات، الأخضر للنتائج، الأحمر للتحذيرات (مثال: $\\color{blue}{x}$).
 - ضع القواعد الهامة داخل صناديق مميزة باستخدام علامة (>) (Blockquote).
 
@@ -125,42 +126,30 @@ def call_groq(contents, system_instruction):
     except Exception as e:
         return None
 
-def chat_response(message, history):
+def chat_response(message, history, image):
     try:
-        if isinstance(message, dict):
-            text_content = message.get("text", "")
-            files = message.get("files", [])
+        # ✅ معالجة الصورة (إذا تم رفعها)
+        if image is not None and client:
+            with open(image, "rb") as f:
+                image_bytes = f.read()
             
-            if files and client:
-                file_obj = files[0]
-                if hasattr(file_obj, 'path'):
-                    image_path = file_obj.path
-                elif isinstance(file_obj, dict):
-                    image_path = file_obj.get('path')
-                else:
-                    image_path = str(file_obj)
-                
-                with open(image_path, "rb") as f:
-                    image_bytes = f.read()
-                
-                mime_type = "image/jpeg"
-                if image_path.lower().endswith(".png"):
-                    mime_type = "image/png"
-                elif image_path.lower().endswith(".webp"):
-                    mime_type = "image/webp"
-                
-                response = client.models.generate_content(
-                    model="gemini-2.5-flash",
-                    contents=[
-                        types.Part.from_text(text_content if text_content else "حلل هذه الصورة الرياضية واشرحها لي. تجاهل أي واجهة مستخدم أو قوائم، وركز فقط على النص الرياضي."),
-                        types.Part.from_bytes(data=image_bytes, mime_type=mime_type)
-                    ],
-                    config=types.GenerateContentConfig(system_instruction=prompt, temperature=0.3)
-                )
-                return response.text if response.text else "عذراً، لم أتمكن من تحليل الصورة."
-            else:
-                message = text_content
+            mime_type = "image/jpeg"
+            if image.lower().endswith(".png"):
+                mime_type = "image/png"
+            elif image.lower().endswith(".webp"):
+                mime_type = "image/webp"
+            
+            response = client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=[
+                    types.Part.from_text(message if message else "حلل هذه الصورة الرياضية واشرحها لي. تجاهل أي واجهة مستخدم أو قوائم، وركز فقط على النص الرياضي."),
+                    types.Part.from_bytes(data=image_bytes, mime_type=mime_type)
+                ],
+                config=types.GenerateContentConfig(system_instruction=prompt, temperature=0.3)
+            )
+            return response.text if response.text else "عذراً، لم أتمكن من تحليل الصورة."
 
+        # ✅ معالجة النص العادي
         if len(history) == 0:
             welcome_msg = "أهلاً بك! أنا مساعدك الأكاديمي في الرياضيات للثالثة ثانوي. كيف يمكنني مساعدتك اليوم؟"
             return welcome_msg
@@ -204,10 +193,14 @@ with gr.Blocks(css=custom_css) as demo:
     gr.Markdown("<h1 style='text-align: center; margin-bottom: 0;'>OustadDz - أستاذ الرياضيات</h1>")
     gr.Markdown("<p style='text-align: center; font-size: 16px; color: #444; margin-top: 5px;'>رفيقك في رياضيات الثالثة ثانوي.</p>")
 
+    # ✅ إضافة حقل الصورة بشكل منفصل
+    with gr.Row():
+        image_input = gr.Image(type="filepath", label="أرفق صورة التمرين (اختياري)")
+    
     chat = gr.ChatInterface(
         fn=chat_response,
-        multimodal=True,
-        textbox=gr.MultimodalTextbox(placeholder="اكتب سؤالك أو أرفق صورة لتمرين...", file_types=["image"]),
+        additional_inputs=[image_input],
+        textbox=gr.Textbox(placeholder="اكتب سؤالك هنا...", label="سؤالك"),
         chatbot=gr.Chatbot(
             avatar_images=(None, BOT_AVATAR_PATH),
             height=500,
