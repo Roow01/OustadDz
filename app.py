@@ -41,7 +41,7 @@ prompt = """
 6. التصميم البصري والجداول (مهم جداً):
 - استخدم العناوين البارزة (مثل ###) لتقسيم الدروس.
 - استخدم الرموز التعبيرية (📌، 📊، ⚠️، ✅) لتوضيح النقاط.
-- **الجداول**: يُمنع منعاً باتاً استخدام تنسيق Markdown للجداول (مثل `|` أو `---`). بل استخدم تنسيق LaTeX فقط: `\\begin{array}{|c|c|} \\hline ... \\end{array}`. هذا يضمن ظهور الجداول بشكل أفقي ومنسق.
+- **الجداول**: يُمنع منعاً باتاً استخدام تنسيق Markdown للجداول. بل استخدم تنسيق LaTeX فقط: `\\begin{array}{|c|c|} \\hline ... \\end{array}`. هذا يضمن ظهور الجداول بشكل أفقي ومنسق.
 - استخدم الألوان في LaTeX لتمييز العناصر: الأزرق للمتغيرات، الأخضر للنتائج، الأحمر للتحذيرات (مثال: $\\color{blue}{x}$).
 - ضع القواعد الهامة داخل صناديق مميزة باستخدام علامة (>) (Blockquote).
 
@@ -126,30 +126,36 @@ def call_groq(contents, system_instruction):
     except Exception as e:
         return None
 
-def chat_response(message, history, image):
+def chat_response(message, history):
     try:
-        # ✅ معالجة الصورة (إذا تم رفعها)
-        if image is not None and client:
-            with open(image, "rb") as f:
-                image_bytes = f.read()
+        if isinstance(message, dict):
+            text_content = message.get("text", "")
+            files = message.get("files", [])
             
-            mime_type = "image/jpeg"
-            if image.lower().endswith(".png"):
-                mime_type = "image/png"
-            elif image.lower().endswith(".webp"):
-                mime_type = "image/webp"
-            
-            response = client.models.generate_content(
-                model="gemini-2.5-flash",
-                contents=[
-                    types.Part.from_text(message if message else "حلل هذه الصورة الرياضية واشرحها لي. تجاهل أي واجهة مستخدم أو قوائم، وركز فقط على النص الرياضي."),
-                    types.Part.from_bytes(data=image_bytes, mime_type=mime_type)
-                ],
-                config=types.GenerateContentConfig(system_instruction=prompt, temperature=0.3)
-            )
-            return response.text if response.text else "عذراً، لم أتمكن من تحليل الصورة."
+            if files and client:
+                image_path = files[0]
+                
+                with open(image_path, "rb") as f:
+                    image_bytes = f.read()
+                
+                mime_type = "image/jpeg"
+                if image_path.lower().endswith(".png"):
+                    mime_type = "image/png"
+                elif image_path.lower().endswith(".webp"):
+                    mime_type = "image/webp"
+                
+                response = client.models.generate_content(
+                    model="gemini-2.5-flash",
+                    contents=[
+                        types.Part.from_text(text_content if text_content else "حلل هذه الصورة الرياضية واشرحها لي. تجاهل أي واجهة مستخدم أو قوائم، وركز فقط على النص الرياضي."),
+                        types.Part.from_bytes(data=image_bytes, mime_type=mime_type)
+                    ],
+                    config=types.GenerateContentConfig(system_instruction=prompt, temperature=0.3)
+                )
+                return response.text if response.text else "عذراً، لم أتمكن من تحليل الصورة."
+            else:
+                message = text_content
 
-        # ✅ معالجة النص العادي
         if len(history) == 0:
             welcome_msg = "أهلاً بك! أنا مساعدك الأكاديمي في الرياضيات للثالثة ثانوي. كيف يمكنني مساعدتك اليوم؟"
             return welcome_msg
@@ -185,22 +191,38 @@ def chat_response(message, history, image):
         print(f"⚠️ Chat Error: {e}")
         return "حدث خطأ غير متوقع. يرجى المحاولة."
 
+# ✅ CSS لجعل زر رفع الملفات صغيراً جداً (أيقونة فقط)
 custom_css = """
 footer {visibility: hidden !important;}
+
+/* تصغير زر رفع الملفات داخل MultimodalTextbox */
+.gradio-container .multimodal-textbox button[aria-label="Upload a file"] {
+    min-width: 30px !important;
+    width: 30px !important;
+    height: 30px !important;
+    padding: 0 !important;
+    font-size: 0 !important; /* إخفاء النص */
+    background-color: transparent !important;
+    border: none !important;
+}
+.gradio-container .multimodal-textbox button[aria-label="Upload a file"]::after {
+    content: "📎";
+    font-size: 18px;
+}
 """
 
 with gr.Blocks(css=custom_css) as demo:
     gr.Markdown("<h1 style='text-align: center; margin-bottom: 0;'>OustadDz - أستاذ الرياضيات</h1>")
     gr.Markdown("<p style='text-align: center; font-size: 16px; color: #444; margin-top: 5px;'>رفيقك في رياضيات الثالثة ثانوي.</p>")
 
-    # ✅ إضافة حقل الصورة بشكل منفصل
-    with gr.Row():
-        image_input = gr.Image(type="filepath", label="أرفق صورة التمرين (اختياري)")
-    
     chat = gr.ChatInterface(
         fn=chat_response,
-        additional_inputs=[image_input],
-        textbox=gr.Textbox(placeholder="اكتب سؤالك هنا...", label="سؤالك"),
+        multimodal=True,
+        textbox=gr.MultimodalTextbox(
+            placeholder="اكتب سؤالك أو أرفق صورة لتمرين...",
+            file_types=["image"],
+            show_label=False
+        ),
         chatbot=gr.Chatbot(
             avatar_images=(None, BOT_AVATAR_PATH),
             height=500,
