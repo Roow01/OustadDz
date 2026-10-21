@@ -126,30 +126,38 @@ def call_groq(contents, system_instruction):
     except Exception as e:
         return None
 
-def chat_response(message, history, image):
+def chat_response(message, history):
     try:
-        # ✅ إذا كانت هناك صورة، أرسلها إلى Gemini
-        if image is not None and client:
-            with open(image, "rb") as f:
-                image_bytes = f.read()
+        # ✅ استخراج الصورة بالطريقة الرسمية من Google Codelabs
+        if isinstance(message, dict):
+            text_content = message.get("text", "")
+            files = message.get("files", [])
             
-            mime_type = "image/jpeg"
-            if image.lower().endswith(".png"):
-                mime_type = "image/png"
-            elif image.lower().endswith(".webp"):
-                mime_type = "image/webp"
-            
-            response = client.models.generate_content(
-                model="gemini-2.5-flash",
-                contents=[
-                    types.Part.from_text(message if message else "حلل هذه الصورة الرياضية واشرحها لي."),
-                    types.Part.from_bytes(data=image_bytes, mime_type=mime_type)
-                ],
-                config=types.GenerateContentConfig(system_instruction=prompt, temperature=0.3)
-            )
-            return response.text if response.text else "عذراً، لم أتمكن من تحليل الصورة."
+            if files and client:
+                file_data = files[0] # FileData object
+                
+                # قراءة الصورة وتحويلها إلى base64
+                with open(file_data, "rb") as f:
+                    image_bytes = f.read()
+                
+                mime_type = "image/jpeg"
+                if file_data.lower().endswith(".png"):
+                    mime_type = "image/png"
+                elif file_data.lower().endswith(".webp"):
+                    mime_type = "image/webp"
+                
+                response = client.models.generate_content(
+                    model="gemini-2.5-flash",
+                    contents=[
+                        types.Part.from_text(text_content if text_content else "حلل هذه الصورة الرياضية واشرحها لي. تجاهل أي واجهة مستخدم أو قوائم، وركز فقط على النص الرياضي."),
+                        types.Part.from_bytes(data=image_bytes, mime_type=mime_type)
+                    ],
+                    config=types.GenerateContentConfig(system_instruction=prompt, temperature=0.3)
+                )
+                return response.text if response.text else "عذراً، لم أتمكن من تحليل الصورة."
+            else:
+                message = text_content
 
-        # ✅ إذا كانت رسالة نصية فقط
         if len(history) == 0:
             welcome_msg = "أهلاً بك! أنا مساعدك الأكاديمي في الرياضيات للثالثة ثانوي. كيف يمكنني مساعدتك اليوم؟"
             return welcome_msg
@@ -211,8 +219,12 @@ with gr.Blocks(css=custom_css) as demo:
 
     chat = gr.ChatInterface(
         fn=chat_response,
-        additional_inputs=[gr.Image(type="filepath", label="أرفق صورة (اختياري)")],
-        textbox=gr.Textbox(placeholder="اكتب سؤالك هنا..."),
+        multimodal=True,
+        textbox=gr.MultimodalTextbox(
+            placeholder="اكتب سؤالك أو أرفق صورة لتمرين...",
+            file_types=["image"],
+            show_label=False
+        ),
         chatbot=gr.Chatbot(
             avatar_images=(None, BOT_AVATAR_PATH),
             height=500,
