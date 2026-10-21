@@ -128,15 +128,14 @@ def call_groq(contents, system_instruction):
 
 def chat_response(message, history):
     try:
-        # ✅ استخراج الصورة بالطريقة الرسمية من Google Codelabs
+        # ✅ استخراج الصورة بالطريقة الرسمية
         if isinstance(message, dict):
             text_content = message.get("text", "")
             files = message.get("files", [])
             
             if files and client:
-                file_data = files[0] # FileData object
+                file_data = files[0]
                 
-                # قراءة الصورة وتحويلها إلى base64
                 with open(file_data, "rb") as f:
                     image_bytes = f.read()
                 
@@ -149,7 +148,7 @@ def chat_response(message, history):
                 response = client.models.generate_content(
                     model="gemini-2.5-flash",
                     contents=[
-                        types.Part.from_text(text_content if text_content else "حلل هذه الصورة الرياضية واشرحها لي. تجاهل أي واجهة مستخدم أو قوائم، وركز فقط على النص الرياضي."),
+                        types.Part.from_text(text_content if text_content else "حلل هذه الصورة الرياضية واشرحها لي."),
                         types.Part.from_bytes(data=image_bytes, mime_type=mime_type)
                     ],
                     config=types.GenerateContentConfig(system_instruction=prompt, temperature=0.3)
