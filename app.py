@@ -41,7 +41,7 @@ prompt = """
 6. التصميم البصري والجداول (مهم جداً):
 - استخدم العناوين البارزة (مثل ###) لتقسيم الدروس.
 - استخدم الرموز التعبيرية (📌، 📊، ⚠️، ✅) لتوضيح النقاط.
-- **الجداول**: يُمنع منعاً باتاً استخدام تنسيق Markdown للجداول. بل استخدم تنسيق LaTeX فقط: `\\begin{array}{|c|c|} \\hline ... \\end{array}`. هذا يضمن ظهور الجداول بشكل أفقي ومنسق.
+- **الجداول**: يُمنع منعاً باتاً استخدام تنسيق Markdown للجداول (مثل `|` أو `---`). بل استخدم تنسيق LaTeX فقط: `\\begin{array}{|c|c|} \\hline ... \\end{array}`. هذا يضمن ظهور الجداول بشكل أفقي ومنسق.
 - استخدم الألوان في LaTeX لتمييز العناصر: الأزرق للمتغيرات، الأخضر للنتائج، الأحمر للتحذيرات (مثال: $\\color{blue}{x}$).
 - ضع القواعد الهامة داخل صناديق مميزة باستخدام علامة (>) (Blockquote).
 
@@ -128,7 +128,6 @@ def call_groq(contents, system_instruction):
 
 def chat_response(message, history, image):
     try:
-        # ✅ معالجة الصورة (إذا تم رفعها)
         if image is not None and client:
             with open(image, "rb") as f:
                 image_bytes = f.read()
@@ -149,7 +148,6 @@ def chat_response(message, history, image):
             )
             return response.text if response.text else "عذراً، لم أتمكن من تحليل الصورة."
 
-        # ✅ معالجة النص العادي
         if len(history) == 0:
             welcome_msg = "أهلاً بك! أنا مساعدك الأكاديمي في الرياضيات للثالثة ثانوي. كيف يمكنني مساعدتك اليوم؟"
             return welcome_msg
@@ -211,7 +209,7 @@ with gr.Blocks(css=custom_css) as demo:
 
     chat = gr.ChatInterface(
         fn=chat_response,
-        additional_inputs=[gr.Image(type="filepath", label="أرفق صورة (اختياري)")], # ✅ حقل الصورة المنفصل
+        additional_inputs=[gr.Image(type="filepath", label="أرفق صورة (اختياري)")],
         textbox=gr.Textbox(placeholder="اكتب سؤالك هنا..."),
         chatbot=gr.Chatbot(
             avatar_images=(None, BOT_AVATAR_PATH),
