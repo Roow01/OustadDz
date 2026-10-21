@@ -46,9 +46,25 @@ prompt = """
 - ضع القواعد الهامة داخل صناديق مميزة باستخدام علامة (>) (Blockquote).
 
 7. التدرج السنوي الرسمي المفصل (2026/2027):
-- الشعب العلمية (رياضيات، تقني رياضي، علوم تجريبية): المتتاليات، الاستمرارية والاشتقاقية، النهايات، الدوال الأسية واللوغاريتمية، الدوال الأصلية والتكامل، الأعداد المركبة (مع التحويلات لرياضيات وتقني)، الهندسة، الحساب (القسمة والموافقات)، الإحصاء والاحتمالات.
-- تسيير واقتصاد: الدوال، المتتاليات، الإحصاء، الاحتمالات، المصفوفات.
-- آداب وفلسفة ولغات أجنبية: الموافقات، المتتاليات، الدوال (درجة 2 و 3)، الإحصاء.
+- الشعب العلمية (رياضيات، تقني رياضي، علوم تجريبية):
+  * الدوال العددية: دراسة النهايات، الاستمرارية، الاشتقاقية، والتزايد المقارن.
+  * الدالتان الأسية واللوغاريتمية: التوسع التام، المعادلات التفاضلية (لرياضيات)، الخواص والتطبيقات (لعلوم وتقني).
+  * المتتاليات العددية: المتتاليات، التراجع، الاستدلال بالتراجع، والنهايات.
+  * الحساب والتكامل: الدوال الأصلية والحساب التكاملي (موسع للرياضيات، بسيط للعلوم).
+  * الأعداد المركبة: مع التحولات النقطية (لرياضيات وتقني)، دون التحولات (لعلوم تجريبية).
+  * الهندسة في الفضاء: الجداء السلمي، معادلات المستويات والمستقيمات، المقاطع.
+  * الحساب (الموافقات): مقررة بالكامل لرياضيات وتقني (مبرهنة غوص وغوس)، غير مقررة لعلوم تجريبية.
+  * الاحتمالات والإحصاء: الاحتمالات الشرطية، المتغيرات العشوائية، والتوزيعات.
+- شعبة تسيير واقتصاد:
+  * الدوال العددية: دراسة السلوك المقارب والدوال وتطبيقاتها الاقتصادية (كلفة، هامش، إيراد).
+  * الدالة الأسية واللوغاريتمية.
+  * المتتاليات الحسابية والهندسية وتطبيقاتها في الفوائد والنمو الاقتصادي.
+  * الإحصاء والاحتمالات: السلاسل الإحصائية لمتغيرين (تعديل خطي، المربعات الدنيا)، الاحتمالات الشرطية وشجرة الاحتمالات.
+  * المصفوفات والأنظمة: الحساب المصروفي وحل جمل معادلات خطية.
+- الشعب الأدبية (آداب وفلسفة، لغات أجنبية):
+  * القسمة الإقليدية والموافقات في Z: خصائص القسمة والموافقات بمدول n، تطبيق الموافقات في إيجاد بواقي القوى وتحديد أيام الأسبوع.
+  * المتتاليات الحسابية والهندسية: تعريف، حدود، ومجموع.
+  * الدوال العددية: دراسة دوال كثيرة الحدود من الدرجة الثانية والثالثة، قراءة المنحنيات وجداول التغيرات.
 
 8. الانتقال المباشر للشرح:
 - إذا طلب التلميذ درساً، اذكر عنوانه ومحتواه فوراً.
@@ -112,35 +128,40 @@ def call_groq(contents, system_instruction):
 
 def chat_response(message, history):
     try:
-        # ✅ استخراج الصورة بالطريقة الرسمية من Google Codelabs
-        if isinstance(message, dict):
+        # ✅ معالجة الرسائل النصية البسيطة (مثل "؟")
+        if isinstance(message, str):
+            text_content = message
+            image_path = None
+        # ✅ معالجة الرسائل التي تحتوي على صور (قاموس)
+        elif isinstance(message, dict):
             text_content = message.get("text", "")
             files = message.get("files", [])
-            
-            if files and client:
-                file_data = files[0]
-                
-                with open(file_data, "rb") as f:
-                    image_bytes = f.read()
-                
-                mime_type = "image/jpeg"
-                if file_data.lower().endswith(".png"):
-                    mime_type = "image/png"
-                elif file_data.lower().endswith(".webp"):
-                    mime_type = "image/webp"
-                
-                response = client.models.generate_content(
-                    model="gemini-2.5-flash",
-                    contents=[
-                        types.Part.from_text(text_content if text_content else "حلل هذه الصورة الرياضية واشرحها لي. تجاهل أي واجهة مستخدم أو قوائم، وركز فقط على النص الرياضي."),
-                        types.Part.from_bytes(data=image_bytes, mime_type=mime_type)
-                    ],
-                    config=types.GenerateContentConfig(system_instruction=prompt, temperature=0.3)
-                )
-                return response.text if response.text else "عذراً، لم أتمكن من تحليل الصورة."
-            else:
-                message = text_content
+            image_path = files[0] if files else None
+        else:
+            return "حدث خطأ غير متوقع. يرجى المحاولة."
 
+        # ✅ إذا كانت هناك صورة، أرسلها إلى Gemini
+        if image_path and client:
+            with open(image_path, "rb") as f:
+                image_bytes = f.read()
+            
+            mime_type = "image/jpeg"
+            if image_path.lower().endswith(".png"):
+                mime_type = "image/png"
+            elif image_path.lower().endswith(".webp"):
+                mime_type = "image/webp"
+            
+            response = client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=[
+                    types.Part.from_text(text_content if text_content else "حلل هذه الصورة الرياضية واشرحها لي."),
+                    types.Part.from_bytes(data=image_bytes, mime_type=mime_type)
+                ],
+                config=types.GenerateContentConfig(system_instruction=prompt, temperature=0.3)
+            )
+            return response.text if response.text else "عذراً، لم أتمكن من تحليل الصورة."
+
+        # ✅ إذا كانت رسالة نصية فقط
         if len(history) == 0:
             welcome_msg = "أهلاً بك! أنا مساعدك الأكاديمي في الرياضيات للثالثة ثانوي. كيف يمكنني مساعدتك اليوم؟"
             return welcome_msg
@@ -162,7 +183,7 @@ def chat_response(message, history):
                 elif role == "assistant":
                     conversation_context += f"OustadDz: {content}\n"
         
-        conversation_context += f"Student: {message}\nOustadDz:"
+        conversation_context += f"Student: {text_content}\nOustadDz:"
 
         res = call_gemini(conversation_context, prompt)
         if res: return res
