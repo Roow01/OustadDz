@@ -22,7 +22,8 @@ prompt = """
 - إذا سألك التلميذ عن موضوع غير رياضي، أجب عليه بذكاء وإيجاز (سطر أو سطرين)، ثم اسأله: "ولكن دعنا نعد إلى الرياضيات، هل لديك سؤال أو تمرين تريد أن نراجعه؟".
 - تذكر دائماً أنك "مساعد مكمل ومرافق"، ولست بديلاً عن الأستاذ الرسمي في القسم.
 - إذا ذكر التلميذ "لغات" (مثل: أنا رضوان، لغات)، فهو يقصد شعبة اللغات الأجنبية. تعامل معه على هذا الأساس.
-- في أول رسالة فقط، رحب بالتلميذ واطلب اسمه وشعبته. يُمنع سؤاله عنهم مرة أخرى.
+- **التكيف مع المستخدم**: لا تصر على معرفة الاسم والشعبة في كل رسالة. إذا لم يذكرهما، ابدأ بالشرح مباشرة. إذا احتجت إليهما، اسأل بلطف.
+- في أول رسالة فقط، رحب بالتلميذ واطلب اسمه وشعبته.
 
 2. الذكاء السلوكي (التأنيث والتذكير):
 - إذا كان الاسم مؤنثاً (نسرين، مريم، سارة، مروة...)، خاطبها بصيغة المؤنث (أهلاً بكِ، مساعدتِك، فهمتِ، أحسنتِ، تريدين).
@@ -95,12 +96,13 @@ def call_gemini(contents, system_instruction):
     if not client: return None
     try:
         response = client.models.generate_content(
-            model="gemini-2.5-flash-lite",
+            model="gemini-2.5-flash",
             contents=contents,
             config=types.GenerateContentConfig(system_instruction=system_instruction, temperature=0.3)
         )
         return response.text if response.text else None
     except Exception as e:
+        print(f"⚠️ Gemini Error: {e}")
         return None
 
 def call_groq(contents, system_instruction):
@@ -136,11 +138,17 @@ def chat_response(message, history):
                 with open(image_path, "rb") as f:
                     image_bytes = f.read()
                 
+                mime_type = "image/jpeg"
+                if image_path.lower().endswith(".png"):
+                    mime_type = "image/png"
+                elif image_path.lower().endswith(".webp"):
+                    mime_type = "image/webp"
+                
                 response = client.models.generate_content(
-                    model="gemini-2.5-flash-lite",
+                    model="gemini-2.5-flash",
                     contents=[
                         types.Part.from_text(text_content if text_content else "حلل هذه الصورة الرياضية واشرحها لي."),
-                        types.Part.from_bytes(data=image_bytes, mime_type="image/jpeg")
+                        types.Part.from_bytes(data=image_bytes, mime_type=mime_type)
                     ],
                     config=types.GenerateContentConfig(system_instruction=prompt, temperature=0.3)
                 )
@@ -187,7 +195,6 @@ footer {visibility: hidden !important;}
 """
 
 with gr.Blocks(css=custom_css) as demo:
-    # ✅ العنوان التعريفي الجديد
     gr.Markdown("<h1 style='text-align: center; margin-bottom: 0;'>OustadDz - أستاذ الرياضيات</h1>")
     gr.Markdown("<p style='text-align: center; font-size: 16px; color: #444; margin-top: 5px;'>أستاذك الذكي الخاص للرياضيات.</p>")
 
@@ -209,7 +216,6 @@ with gr.Blocks(css=custom_css) as demo:
     chat.saved_conversations.secret = "oustad_dz_secret_2026"
     chat.saved_conversations.storage_key = "_oustad_dz_saved_conversations"
     
-    # ✅ التوصية والتوقيع
     gr.HTML("""
     <div translate="no" style='text-align: center; margin-top: 15px;'>
         <p style='font-size: 12px; color: #888; margin-bottom: 5px;'>This is an AI assistant. It may make mistakes.</p>
