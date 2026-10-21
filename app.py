@@ -125,30 +125,37 @@ def call_groq(contents, system_instruction):
     except Exception as e:
         return None
 
-def chat_response(message, history, image):
+def chat_response(message, history):
     try:
-        # ✅ معالجة الصورة (إذا تم رفعها)
-        if image is not None and client:
-            with open(image, "rb") as f:
-                image_bytes = f.read()
+        # ✅ استخراج الصورة بالطريقة الرسمية (message["files"] هي قائمة مسارات نصية)
+        if isinstance(message, dict):
+            text_content = message.get("text", "")
+            files = message.get("files", [])
             
-            mime_type = "image/jpeg"
-            if image.lower().endswith(".png"):
-                mime_type = "image/png"
-            elif image.lower().endswith(".webp"):
-                mime_type = "image/webp"
-            
-            response = client.models.generate_content(
-                model="gemini-2.5-flash",
-                contents=[
-                    types.Part.from_text(message if message else "حلل هذه الصورة الرياضية واشرحها لي."),
-                    types.Part.from_bytes(data=image_bytes, mime_type=mime_type)
-                ],
-                config=types.GenerateContentConfig(system_instruction=prompt, temperature=0.3)
-            )
-            return response.text if response.text else "عذراً، لم أتمكن من تحليل الصورة."
+            if files and client:
+                image_path = files[0]  # مسار نصي مباشر
+                
+                with open(image_path, "rb") as f:
+                    image_bytes = f.read()
+                
+                mime_type = "image/jpeg"
+                if image_path.lower().endswith(".png"):
+                    mime_type = "image/png"
+                elif image_path.lower().endswith(".webp"):
+                    mime_type = "image/webp"
+                
+                response = client.models.generate_content(
+                    model="gemini-2.5-flash",
+                    contents=[
+                        types.Part.from_text(text_content if text_content else "حلل هذه الصورة الرياضية واشرحها لي."),
+                        types.Part.from_bytes(data=image_bytes, mime_type=mime_type)
+                    ],
+                    config=types.GenerateContentConfig(system_instruction=prompt, temperature=0.3)
+                )
+                return response.text if response.text else "عذراً، لم أتمكن من تحليل الصورة."
+            else:
+                message = text_content
 
-        # ✅ معالجة النص العادي
         if len(history) == 0:
             welcome_msg = "أهلاً بك! أنا مساعدك الأكاديمي في الرياضيات للثالثة ثانوي. كيف يمكنني مساعدتك اليوم؟"
             return welcome_msg
@@ -158,7 +165,11 @@ def chat_response(message, history, image):
             if isinstance(item, dict):
                 role = item.get("role", "user")
                 content = item.get("content", "")
-                if isinstance(content, list):
+                
+                # ✅ في Gradio 6، الصور في التاريخ تظهر كـ tuple
+                if isinstance(content, tuple):
+                    content = "[صورة مرفقة]"
+                elif isinstance(content, list):
                     text_part = ""
                     for block in content:
                         if isinstance(block, dict) and block.get("type") == "text":
@@ -210,8 +221,13 @@ with gr.Blocks(css=custom_css) as demo:
 
     chat = gr.ChatInterface(
         fn=chat_response,
-        additional_inputs=[gr.Image(type="filepath", label="أرفق صورة (اختياري)")],
-        textbox=gr.Textbox(placeholder="اكتب سؤالك هنا..."),
+        multimodal=True,
+        type="messages",
+        textbox=gr.MultimodalTextbox(
+            placeholder="اكتب سؤالك أو أرفق صورة لتمرين...",
+            file_types=["image"],
+            show_label=False
+        ),
         chatbot=gr.Chatbot(
             avatar_images=(None, BOT_AVATAR_PATH),
             height=500,
@@ -229,7 +245,7 @@ with gr.Blocks(css=custom_css) as demo:
     gr.HTML("""
     <div translate="no" style='text-align: center; margin-top: 15px;'>
         <p style='font-size: 12px; color: #888; margin-bottom: 5px;'>This is an AI assistant. It may make mistakes.</p>
-        <p style='font-weight: bold; color: #666; font-size: 14px;'>Powered by Qimah Production | v3.0</p>
+        <p style='font-weight: bold; color: #666; font-size: 14px;'>Powered by Qimah Production | v1.0</p>
     </div>
     """)
 
