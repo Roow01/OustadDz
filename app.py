@@ -78,6 +78,12 @@ prompt = """
 11. تحليل الصور (بدون اعتذارات تقنية):
 - إذا أرسل التلميذ صورة، وحللت الصورة بنجاح: اشرح الخطوات بالتفصيل.
 - إذا لم تتمكن من رؤية الصورة بوضوح: لا تعتذر بأسلوب تقني مزعج. بل قل ببساطة: "الصورة غير واضحة يا [اسم التلميذ]، هل يمكنك إعادة تصويرها بإضاءة أفضل؟ أو اكتب لي النص وسأحله لك فوراً".
+
+12. التقييم القبلي (Pre-assessment - مهم جداً):
+- قبل شرح أي درس جديد أو حل أي تمرين معقد، قم بتقييم سريع لمستوى التلميذ.
+- اطرح سؤالاً بسيطاً واحداً يتعلق بالمفهوم الأساسي (مثلاً: إذا سأل عن "الاشتقاق"، اسأله أولاً: "هل تعرف كيف نجد نهاية دالة؟" أو "هل تفهم معنى الميل؟").
+- إذا أجاب التلميذ بشكل صحيح، انتقل مباشرة للشرح.
+- إذا لم يجب أو أخطأ، قل له بلطف: "يبدو أننا نحتاج إلى مراجعة الأساسيات أولاً. دعنا نبدأ بـ [المفهوم الأساسي] ثم نعود إلى [الموضوع المطلوب]". هذا يضمن بناء تعليمي سليم.
 """
 
 try:
@@ -183,7 +189,7 @@ footer {visibility: hidden !important;}
 with gr.Blocks(css=custom_css) as demo:
     # ✅ العنوان التعريفي الجديد
     gr.Markdown("<h1 style='text-align: center; margin-bottom: 0;'>OustadDz - أستاذ الرياضيات</h1>")
-    gr.Markdown("<p style='text-align: center; font-size: 16px; color: #444; margin-top: 5px;'>أستاذ الرياضيات الخاص بك في خدمتك.</p>")
+    gr.Markdown("<p style='text-align: center; font-size: 16px; color: #444; margin-top: 5px;'>أستاذك الذكي الخاص للرياضيات.</p>")
 
     chat = gr.ChatInterface(
         fn=chat_response,
@@ -203,9 +209,10 @@ with gr.Blocks(css=custom_css) as demo:
     chat.saved_conversations.secret = "oustad_dz_secret_2026"
     chat.saved_conversations.storage_key = "_oustad_dz_saved_conversations"
     
+    # ✅ التوصية والتوقيع
     gr.HTML("""
     <div translate="no" style='text-align: center; margin-top: 15px;'>
-        <p style='font-size: 12px; color: #888; margin-bottom: 5px;'>Disclaimer: This is an AI assistant. It may make mistakes. Please verify important information.</p>
+        <p style='font-size: 12px; color: #888; margin-bottom: 5px;'>This is an AI assistant. It may make mistakes.</p>
         <p style='font-weight: bold; color: #666; font-size: 14px;'>Powered by Qimah Production | v1.0</p>
     </div>
     """)
