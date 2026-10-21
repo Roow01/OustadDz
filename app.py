@@ -127,25 +127,14 @@ def call_groq(contents, system_instruction):
 
 def chat_response(message, history):
     try:
+        # ✅ استخراج الصورة بالطريقة الصحيحة في Gradio 6
         if isinstance(message, dict):
             text_content = message.get("text", "")
-            content_blocks = message.get("content", [])
+            files = message.get("files", []) # في Gradio 6، هذا هو المفتاح الصحيح
             
-            image_path = None
-            for block in content_blocks:
-                if isinstance(block, dict):
-                    if block.get("type") == "file":
-                        file_info = block.get("file", {})
-                        if isinstance(file_info, dict):
-                            image_path = file_info.get("path")
-                        elif hasattr(file_info, 'path'):
-                            image_path = file_info.path
-                        break
-                elif hasattr(block, 'path'):
-                    image_path = block.path
-                    break
-            
-            if image_path and client:
+            if files and client:
+                image_path = files[0] # المسار النصي المباشر
+                
                 with open(image_path, "rb") as f:
                     image_bytes = f.read()
                 
@@ -176,14 +165,10 @@ def chat_response(message, history):
             if isinstance(item, dict):
                 role = item.get("role", "user")
                 content = item.get("content", "")
-                if isinstance(content, list):
-                    text_part = ""
-                    for block in content:
-                        if isinstance(block, dict) and block.get("type") == "text":
-                            text_part += block.get("text", "")
-                        elif hasattr(block, 'text'):
-                            text_part += block.text
-                    content = text_part
+                
+                # ✅ في Gradio 6، الصور في التاريخ تظهر كـ tuple
+                if isinstance(content, tuple):
+                    content = "[صورة مرفقة]" 
                 
                 if role == "user":
                     conversation_context += f"Student: {content}\n"
