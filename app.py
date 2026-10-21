@@ -164,43 +164,17 @@ def chat_response(message, history):
     except Exception as e:
         return "حدث خطأ غير متوقع. يرجى المحاولة."
 
-# ✅ تحسين CSS (تصميم احترافي ومريح + إصلاح المساحة الفارغة)
-custom_css = """
-footer {visibility: hidden !important;}
-body, .gradio-container { background-color: #ffffff !important; }
-.message-wrap .message { 
-    font-size: 16px !important; 
-    line-height: 1.7 !important; 
-    border-radius: 12px !important; 
-    padding: 12px 16px !important; 
-    margin-bottom: 12px !important; 
-}
-.message-wrap .message.user { background-color: #e3f2fd !important; color: #000 !important; }
-.message-wrap .message.bot { background-color: #f7f7f7 !important; color: #000 !important; border: 1px solid #e0e0e0 !important; }
-textarea { 
-    border-radius: 10px !important; 
-    border: 1px solid #d0d0d0 !important; 
-    padding: 12px !important; 
-    font-size: 15px !important; 
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05) !important; 
-}
-.katex-display { font-size: 1.1em !important; margin: 10px 0 !important; }
-/* ✅ إصلاح المساحة الفارغة: جعل الشات يتمدد ليملأ الشاشة */
-#chatbot { flex-grow: 1 !important; height: 100% !important; }
-"""
-
-# ✅ واجهة المستخدم
+# ✅ واجهة المستخدم (بدون CSS معقد، مع التوصية في الأسفل)
 with gr.Blocks() as demo:
+    # العنوان التعريفي المحسن
     gr.Markdown("<h1 style='text-align: center; margin-bottom: 0;'>OustadDz - أستاذ الرياضيات</h1>")
-    gr.Markdown("<p style='text-align: center; font-size: 11px; color: #888; margin-top: 5px;'>استاذ رياضيات افتراضي. ليس بديلاً عن الأستاذ الرسمي. قد يخطئ، يرجى التحقق من الإجابات.</p>")
+    gr.Markdown("<p style='text-align: center; font-size: 14px; color: #555; margin-top: 5px;'>مساعد ذكي متخصص في رياضيات الثالثة ثانوي (المنهاج الجزائري 2026/2027).</p>")
 
     chat = gr.ChatInterface(
         fn=chat_response,
         multimodal=True,
-        #
         textbox=gr.MultimodalTextbox(placeholder="اكتب سؤالك أو أرفق صورة لتمرين...", file_types=["image"]),
         chatbot=gr.Chatbot(
-            elem_id="chatbot", # ✅ إضافة معرّف للشات
             avatar_images=(None, BOT_AVATAR_PATH),
             latex_delimiters=[
                 {"left": "$$", "right": "$$", "display": True},
@@ -213,13 +187,18 @@ with gr.Blocks() as demo:
     chat.saved_conversations.secret = "oustad_dz_secret_2026"
     chat.saved_conversations.storage_key = "_oustad_dz_saved_conversations"
     
-    gr.HTML("<div translate='no' style='text-align: center; margin-top: 15px; font-weight: bold; color: #666; font-size: 14px;'>Powered by Qimah Production | v1.0</div>")
+    # ✅ التوصية (بخط صغير جداً) والتوقيع في الأسفل
+    gr.HTML("""
+    <div style='text-align: center; margin-top: 10px;'>
+        <p style='font-size: 10px; color: #999; margin-bottom: 5px;'>Disclaimer: This is an AI assistant. It may make mistakes. Please verify important information.</p>
+        <p style='font-weight: bold; color: #666; font-size: 13px;'>Powered by Qimah Production | v1.0</p>
+    </div>
+    """)
 
 demo.queue().launch(
     server_name="0.0.0.0", 
     server_port=int(os.environ.get("PORT", 7860)), 
     pwa=True,
     favicon_path=BOT_AVATAR_PATH,
-    css=custom_css,
     theme=gr.themes.Soft()
 )
