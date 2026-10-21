@@ -127,13 +127,18 @@ def call_groq(contents, system_instruction):
 
 def chat_response(message, history):
     try:
-        # ✅ استخراج الصورة بالطريقة الصحيحة في Gradio 6
         if isinstance(message, dict):
             text_content = message.get("text", "")
-            files = message.get("files", []) # في Gradio 6، هذا هو المفتاح الصحيح
+            files = message.get("files", [])
             
             if files and client:
-                image_path = files[0] # المسار النصي المباشر
+                file_obj = files[0]
+                if hasattr(file_obj, 'path'):
+                    image_path = file_obj.path
+                elif isinstance(file_obj, dict):
+                    image_path = file_obj.get('path')
+                else:
+                    image_path = str(file_obj)
                 
                 with open(image_path, "rb") as f:
                     image_bytes = f.read()
@@ -165,10 +170,12 @@ def chat_response(message, history):
             if isinstance(item, dict):
                 role = item.get("role", "user")
                 content = item.get("content", "")
-                
-                # ✅ في Gradio 6، الصور في التاريخ تظهر كـ tuple
-                if isinstance(content, tuple):
-                    content = "[صورة مرفقة]" 
+                if isinstance(content, list):
+                    text_part = ""
+                    for block in content:
+                        if isinstance(block, dict) and block.get("type") == "text":
+                            text_part += block.get("text", "")
+                    content = text_part
                 
                 if role == "user":
                     conversation_context += f"Student: {content}\n"
