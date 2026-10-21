@@ -118,10 +118,15 @@ def chat_response(message, history):
     try:
         if isinstance(message, dict):
             text_content = message.get("text", "")
-            files = message.get("files", [])
+            content_blocks = message.get("content", [])
             
-            if files and client:
-                image_path = files[0]
+            image_path = None
+            for block in content_blocks:
+                if isinstance(block, dict) and block.get("type") == "file":
+                    image_path = block.get("file", {}).get("path")
+                    break
+            
+            if image_path and client:
                 with open(image_path, "rb") as f:
                     image_bytes = f.read()
                 
@@ -146,6 +151,13 @@ def chat_response(message, history):
             if isinstance(item, dict):
                 role = item.get("role", "user")
                 content = item.get("content", "")
+                if isinstance(content, list):
+                    text_part = ""
+                    for block in content:
+                        if isinstance(block, dict) and block.get("type") == "text":
+                            text_part += block.get("text", "")
+                    content = text_part
+                
                 if role == "user":
                     conversation_context += f"Student: {content}\n"
                 elif role == "assistant":
@@ -164,11 +176,14 @@ def chat_response(message, history):
     except Exception as e:
         return "حدث خطأ غير متوقع. يرجى المحاولة."
 
-# ✅ واجهة المستخدم (بدون CSS معقد، مع التوصية في الأسفل)
-with gr.Blocks() as demo:
-    # العنوان التعريفي المحسن
+custom_css = """
+footer {visibility: hidden !important;}
+"""
+
+with gr.Blocks(css=custom_css) as demo:
+    # ✅ العنوان التعريفي الجديد
     gr.Markdown("<h1 style='text-align: center; margin-bottom: 0;'>OustadDz - أستاذ الرياضيات</h1>")
-    gr.Markdown("<p style='text-align: center; font-size: 14px; color: #555; margin-top: 5px;'>مساعد ذكي متخصص في رياضيات الثالثة ثانوي (المنهاج الجزائري 2026/2027).</p>")
+    gr.Markdown("<p style='text-align: center; font-size: 16px; color: #444; margin-top: 5px;'>أستاذ الرياضيات الخاص بك في خدمتك.</p>")
 
     chat = gr.ChatInterface(
         fn=chat_response,
@@ -176,6 +191,7 @@ with gr.Blocks() as demo:
         textbox=gr.MultimodalTextbox(placeholder="اكتب سؤالك أو أرفق صورة لتمرين...", file_types=["image"]),
         chatbot=gr.Chatbot(
             avatar_images=(None, BOT_AVATAR_PATH),
+            height=500,
             latex_delimiters=[
                 {"left": "$$", "right": "$$", "display": True},
                 {"left": "$", "right": "$", "display": False}
@@ -187,11 +203,10 @@ with gr.Blocks() as demo:
     chat.saved_conversations.secret = "oustad_dz_secret_2026"
     chat.saved_conversations.storage_key = "_oustad_dz_saved_conversations"
     
-    # ✅ التوصية (بخط صغير جداً) والتوقيع في الأسفل
     gr.HTML("""
-    <div style='text-align: center; margin-top: 10px;'>
-        <p style='font-size: 10px; color: #999; margin-bottom: 5px;'>Disclaimer: This is an AI assistant. It may make mistakes. Please verify important information.</p>
-        <p style='font-weight: bold; color: #666; font-size: 13px;'>Powered by Qimah Production | v1.0</p>
+    <div translate="no" style='text-align: center; margin-top: 15px;'>
+        <p style='font-size: 12px; color: #888; margin-bottom: 5px;'>Disclaimer: This is an AI assistant. It may make mistakes. Please verify important information.</p>
+        <p style='font-weight: bold; color: #666; font-size: 14px;'>Powered by Qimah Production | v1.0</p>
     </div>
     """)
 
