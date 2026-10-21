@@ -9,7 +9,7 @@ import base64
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 
-# ✅ مسار الصورة الذي رفعته أنت
+# ✅ مسار الصورة
 BOT_AVATAR_PATH = "Gemini_Generated_Image_9ccjp9ccjp9ccjp9.jpeg"
 
 prompt = """
@@ -22,8 +22,7 @@ prompt = """
 - إذا سألك التلميذ عن موضوع غير رياضي، أجب عليه بذكاء وإيجاز (سطر أو سطرين)، ثم اسأله: "ولكن دعنا نعد إلى الرياضيات، هل لديك سؤال أو تمرين تريد أن نراجعه؟".
 - تذكر دائماً أنك "مساعد مكمل ومرافق"، ولست بديلاً عن الأستاذ الرسمي في القسم.
 - إذا ذكر التلميذ "لغات" (مثل: أنا رضوان، لغات)، فهو يقصد شعبة اللغات الأجنبية. تعامل معه على هذا الأساس.
-- **التكيف مع المستخدم**: لا تصر على معرفة الاسم والشعبة. إذا أرسل المستخدم صورة أو سؤالاً مباشراً، **تجاهل طلب الاسم** وابدأ بالشرح فوراً. إذا احتجت إليهما، اسأل بلطف في نهاية الرد.
-- في أول رسالة نصية فقط (وليس الصورة)، رحب بالتلميذ واطلب اسمه وشعبته.
+- **مهم جداً**: **لا تسأل عن الاسم أو الشعبة مطلقاً**. اكتفِ بالترحيب وابدأ بالشرح مباشرة. إذا احتجت إليهما، اسأل بلطف في نهاية الرد.
 
 2. الذكاء السلوكي (التأنيث والتذكير):
 - إذا كان الاسم مؤنثاً (نسرين، مريم، سارة، مروة...)، خاطبها بصيغة المؤنث (أهلاً بكِ، مساعدتِك، فهمتِ، أحسنتِ، تريدين).
@@ -78,7 +77,7 @@ prompt = """
 
 11. تحليل الصور (بدون اعتذارات تقنية):
 - إذا أرسل التلميذ صورة، وحللت الصورة بنجاح: اشرح الخطوات بالتفصيل.
-- إذا لم تتمكن من رؤية الصورة بوضوح: لا تعتذر بأسلوب تقني مزعج. بل قل ببساطة: "الصورة غير واضحة يا [اسم التلميذ]، هل يمكنك إعادة تصويرها بإضاءة أفضل؟ أو اكتب لي النص وسأحله لك فوراً".
+- إذا لم تتمكن من رؤية الصورة بوضوح: لا تعتذر بأسلوب تقني مزعج. بل قل ببساطة: "الصورة غير واضحة يا صديقي، هل يمكنك إعادة تصويرها بإضاءة أفضل؟ أو اكتب لي النص وسأحله لك فوراً".
 
 12. التقييم القبلي (Pre-assessment - مهم جداً):
 - قبل شرح أي درس جديد أو حل أي تمرين معقد، قم بتقييم سريع لمستوى التلميذ.
@@ -96,7 +95,7 @@ def call_gemini(contents, system_instruction):
     if not client: return None
     try:
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-2.5-flash", # ✅ flash لدعم الصور
             contents=contents,
             config=types.GenerateContentConfig(system_instruction=system_instruction, temperature=0.3)
         )
@@ -138,6 +137,7 @@ def chat_response(message, history):
                 with open(image_path, "rb") as f:
                     image_bytes = f.read()
                 
+                # ✅ تحديد mime_type الصحيح
                 mime_type = "image/jpeg"
                 if image_path.lower().endswith(".png"):
                     mime_type = "image/png"
@@ -196,8 +196,7 @@ footer {visibility: hidden !important;}
 
 with gr.Blocks(css=custom_css) as demo:
     gr.Markdown("<h1 style='text-align: center; margin-bottom: 0;'>OustadDz - أستاذ الرياضيات</h1>")
-    # ✅ العبارة الجديدة
-    gr.Markdown("<p style='text-align: center; font-size: 16px; color: #444; margin-top: 5px;'>رفيقك في رياضيات الثالثة ثانوي.</p>")
+    gr.Markdown("<p style='text-align: center; font-size: 16px; color: #444; margin-top: 5px;'>مساعدك الذكي في الرياضيات.</p>")
 
     chat = gr.ChatInterface(
         fn=chat_response,
