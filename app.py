@@ -197,7 +197,7 @@ with gr.Blocks() as demo:
     chat = gr.ChatInterface(
         fn=chat_response,
         multimodal=True,
-        fill_height=True,
+        #
         textbox=gr.MultimodalTextbox(placeholder="اكتب سؤالك أو أرفق صورة لتمرين...", file_types=["image"]),
         chatbot=gr.Chatbot(
             elem_id="chatbot", # ✅ إضافة معرّف للشات
