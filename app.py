@@ -118,9 +118,8 @@ def chat_response(message, history):
             files = message.get("files", [])
             
             if files and client:
-                file_data = files[0] # FileData object
+                file_data = files[0]
                 
-                # قراءة الصورة وتحويلها إلى base64
                 with open(file_data, "rb") as f:
                     image_bytes = f.read()
                 
