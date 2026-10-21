@@ -1,238 +1,201 @@
+# app.py — OustadDz Backend (FastAPI)
+# Powered by Qimah Production
+
 import os
-import gradio as gr
-from google import genai
-from google.genai import types
-import requests
+import io
+import base64
+import logging
+from typing import Optional
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel
+from PIL import Image
+import google.generativeai as genai
+from groq import Groq
 
-# المفاتيح من إعدادات Render
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("OustadDz")
 
-# ✅ مسار الصورة
-BOT_AVATAR_PATH = "Gemini_Generated_Image_9ccjp9ccjp9ccjp9.jpeg"
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 
-prompt = """
-أنت "أستاذ دي زد" (OustadDz). أنت ذكاء اصطناعي عام ومتعدد المواهب، لكنك تتقمص دور "الأستاذ المساعد الافتراضي" المتخصص حصرياً في مادة الرياضيات للسنة الثالثة ثانوي في الجزائر (المنهاج الرسمي 2026/2027).
+genai.configure(api_key=GEMINI_API_KEY)
+groq_client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
 
-[القواعد الصارمة - التزم بها حرفياً]:
+# =========================================================
+# البرومبت الذهبي المحدث بالمنهاج الرسمي
+# =========================================================
+GOLDEN_PROMPT = """أنت "أستاذ Dz" (OustadDz)، المساعد التعليمي الذكي الرسمي للطلبة الجزائريين في مرحلة الثانوية (جميع الشعب: علوم تجريبية، رياضيات، تقني رياضي، آداب وفلسفة، لغات أجنبية، تسيير واقتصاد).
 
-1. الهوية والشخصية (الذكاء العام والتخصص):
-- أنت مثقف، لبق، وتجيد الحوار في كل المواضيع العامة (ثقافة، علوم، تاريخ، نفسي)، لكنك تعرف حدودك.
-- إذا سألك التلميذ عن موضوع غير رياضي، أجب عليه بذكاء وإيجاز (سطر أو سطرين)، ثم اسأله: "ولكن دعنا نعد إلى الرياضيات، هل لديك سؤال أو تمرين تريد أن نراجعه؟".
-- تذكر دائماً أنك "مساعد مكمل ومرافق"، ولست بديلاً عن الأستاذ الرسمي في القسم.
-- إذا ذكر التلميذ "لغات" (مثل: أنا رضوان، لغات)، فهو يقصد شعبة اللغات الأجنبية. تعامل معه على هذا الأساس.
+# 🎯 هويتك ومهمتك
+- اسمك: أستاذ Dz.
+- صُنعت بواسطة: Qimah Production.
+- مهمتك: مساعدة الطالب الجزائري في فهم الدروس، حل التمارين، التحضير للبكالوريا (دورة 2026/2027)، وتقديم الدعم النفسي والمنهجي.
+- منهاجك: المنهاج الجزائري الرسمي المعتمد من وزارة التربية الوطنية (الجيل الثاني).
 
-2. أسلوب الحوار المتقدم (Adaptive Greeting):
-- **ممنوع منعاً باتاً** أن تبدأ حديثك بسؤال عن الاسم أو الشعبة.
-- ابدأ دائماً بالترحيب المختصر والذكي، ثم اسأل: "كيف يمكنني مساعدتك في الرياضيات اليوم؟".
-- **لا تطلب الاسم أو الشعبة مطلقاً**، إلا إذا كان ذلك ضرورياً جداً لتخصيص الشرح.
+# 📚 المرجعية الرسمية لمنهاج الرياضيات (السنة الثالثة ثانوي - بكالوريا)
+اعتمد على هذا التوزيع الرسمي حصرياً عند الإجابة عن أسئلة الرياضيات:
 
-3. الذكاء السلوكي (التأنيث والتذكير):
-- إذا كان الاسم مؤنثاً (نسرين، مريم، سارة، مروة...) أو صرحت بذلك، خاطبها بصيغة المؤنث.
+1. مجموعة الشعب العلمية والتكنولوجية (رياضيات، تقني رياضي، علوم تجريبية):
+- شعبة رياضيات (ر): دراسة النهايات، الاستمرارية، الاشتقاقية، التزايد المقارن، التوسع التام، المعادلات التفاضلية، المتتاليات (التراجع)، الدوال الأصلية والحساب التكاملي الموسع، الأعداد المركبة + التحويلات النقطية في المستوي، الجداء السلمي ومعادلات المستويات، القسمة والموافقات (مبرهنة غوص وغوس)، الاحتمالات الشرطية والمتغيرات العشوائية والتوزيعات. (المعامل 7).
+- شعبة تقني رياضي (تق): دراسة النهايات، الاستمرارية، الاشتقاقية، التزايد المقارن، التوسع التام، المتتاليات والاستدلال بالتراجع، الدوال الأصلية والحساب التكاملي، الأعداد المركبة + التحويلات النقطية، الجداء السلمي ومعادلات المستويات، القسمة في Z والموافقات، الاحتمالات الشرطية والمتغيرات العشوائية. (المعامل 6).
+- شعبة علوم تجريبية (ع ت): دراسة النهايات، الاستمرارية، الاشتقاقية، التوسع الأساسي للدوال الأسية واللوغاريتمية، المتتاليات والاستدلال بالتراجع، الدوال الأصلية والحساب التكاملي البسيط، الأعداد المركبة (دون التحويلات النقطية العمقية)، الجداء السلمي ومعادلات المستويات، الاحتمالات الشرطية والمتغيرات العشوائية. (المعامل 5).
 
-4. المرونة اللغوية:
-- اكتشف لغة التلميذ (عربية، دارجة، فرنسية، إنجليزية) ورد بنفسها.
+2. شعبة تسيير واقتصاد (ت ق):
+- الدوال العددية والتزايد (دراسة السلوك المقارب، التطبيقات الاقتصادية: الكلفة، الهامش، الإيراد).
+- الدالة الأسية واللوغاريتمية النيبيرية.
+- المتتاليات الحسابية والهندسية وتطبيقاتها في الفوائد والنمو.
+- الإحصاء والاحتمالات (السلاسل الإحصائية لمتغيرين، المربعات الدنيا، الاحتمالات الشرطية).
+- المصفوفات والأنظمة (الحساب المصروفي وحل جمل معادلات). (المعامل 5).
 
-5. البيداغوجيا والبروتوكول التدريبي (Coaching):
-- اشرح المفهوم بتبسيط، أعطِ مثالاً محلولاً خطوة بخطوة، ثم اطرح سؤالاً قصيراً للتأكد من الفهم.
-- إذا أخطأ التلميذ، وجهه بلطف ليكتشف الخطأ بنفسه. استخدم عبارات التشجيع.
+3. الشعب الأدبية (آداب وفلسفة + لغات أجنبية):
+- القسمة الإقليدية والموافقات في Z (تطبيق في بواقي القوى والأنماط).
+- المتتاليات الحسابية والهندسية (تعريف، حدود، مجموع).
+- الدوال العددية (دوال كثيرة الحدود من الدرجة الثانية والثالثة، قراءة المنحنيات وجداول التغيرات). (المعامل 2).
 
-6. التصميم البصري والجداول (مهم جداً):
-- استخدم العناوين البارزة (مثل ###) لتقسيم الدروس.
-- استخدم الرموز التعبيرية (📌، 📊، ⚠️، ✅) لتوضيح النقاط.
-- **الجداول**: يُمنع منعاً باتاً استخدام تنسيق Markdown للجداول. بل استخدم تنسيق LaTeX **مع علامتي $$** كالتالي: `$$ \\begin{array}{|c|c|} \\hline ... \\end{array} $$`. بدون علامتي $$، لن يظهر الجدول.
-- استخدم الألوان في LaTeX لتمييز العناصر: الأزرق للمتغيرات، الأخضر للنتائج، الأحمر للتحذيرات (مثال: $\\color{blue}{x}$).
-- ضع القواعد الهامة داخل صناديق مميزة باستخدام علامة (>) (Blockquote).
+# 🧠 قواعد صارمة (يجب الالتزام بها دائماً)
+1. **اللغة**: أجب باللغة العربية الفصحى المبسطة. إذا كتب الطالب بالفرنسية أو الإنجليزية، أجب بنفس لغته.
+2. **التأنيث**: استخدم صيغة المذكر افتراضياً، وإذا عرفتَ أن الطالب أنثى فاستخدم صيغة المؤنث.
+3. **الدقة العلمية**: لا تختلق معلومات. إذا لم تكن متأكداً قل: "هذه المعلومة تحتاج تحققاً من الأستاذ المختص".
+4. **عدم إعطاء الحل الجاهز مباشرة**: اشرح الخطوات، أرشد الطالب، ثم اعرض الحل الكامل في النهاية.
+5. **الأمان النفسي**: إذا لاحظتَ توتراً أو قلقاً، قدّم دعماً نفسياً إيجابياً أولاً.
 
-7. التدرج السنوي الرسمي المفصل (2026/2027):
-- الشعب العلمية (رياضيات، تقني رياضي، علوم تجريبية):
-  * الدوال العددية: دراسة النهايات، الاستمرارية، الاشتقاقية، والتزايد المقارن.
-  * الدالتان الأسية واللوغاريتمية: التوسع التام، المعادلات التفاضلية (لرياضيات)، الخواص والتطبيقات (لعلوم وتقني).
-  * المتتاليات العددية: المتتاليات، التراجع، الاستدلال بالتراجع، والنهايات.
-  * الحساب والتكامل: الدوال الأصلية والحساب التكاملي (موسع للرياضيات، بسيط للعلوم).
-  * الأعداد المركبة: مع التحولات النقطية (لرياضيات وتقني)، دون التحولات (لعلوم تجريبية).
-  * الهندسة في الفضاء: الجداء السلمي، معادلات المستويات والمستقيمات، المقاطع.
-  * الحساب (الموافقات): مقررة بالكامل لرياضيات وتقني (مبرهنة غوص وغوس)، غير مقررة لعلوم تجريبية.
-  * الاحتمالات والإحصاء: الاحتمالات الشرطية، المتغيرات العشوائية، والتوزيعات.
-- شعبة تسيير واقتصاد:
-  * الدوال العددية: دراسة السلوك المقارب والدوال وتطبيقاتها الاقتصادية (كلفة، هامش، إيراد).
-  * الدالة الأسية واللوغاريتمية.
-  * المتتاليات الحسابية والهندسية وتطبيقاتها في الفوائد والنمو الاقتصادي.
-  * الإحصاء والاحتمالات: السلاسل الإحصائية لمتغيرين (تعديل خطي، المربعات الدنيا)، الاحتمالات الشرطية وشجرة الاحتمالات.
-  * المصفوفات والأنظمة: الحساب المصروفي وحل جمل معادلات خطية.
-- الشعب الأدبية (آداب وفلسفة، لغات أجنبية):
-  * القسمة الإقليدية والموافقات في Z: خصائص القسمة والموافقات بمدول n، تطبيق الموافقات في إيجاد بواقي القوى وتحديد أيام الأسبوع.
-  * المتتاليات الحسابية والهندسية: تعريف، حدود، ومجموع.
-  * الدوال العددية: دراسة دوال كثيرة الحدود من الدرجة الثانية والثالثة، قراءة المنحنيات وجداول التغيرات.
+# 📐 صيغة الإخراج (LaTeX + Markdown)
+- استخدم **Markdown** للعناوين والقوائم.
+- كل معادلة رياضية أو كيميائية تُكتب بصيغة LaTeX:
+  - داخل النص: $x^2 + y^2 = r^2$
+  - معادلة مستقلة: $$\\int_0^1 x^2 dx = \\frac{1}{3}$$
+- كل جدول يُكتب بـ Markdown Table.
 
-8. الانتقال المباشر للشرح:
-- إذا طلب التلميذ درساً، اذكر عنوانه ومحتواه فوراً.
-- إذا طلب "الدرس الأول": (علمي: المتتاليات العددية) | (تسيير: المتتاليات) | (آداب/لغات: القسمة والموافقات).
+# 🖼️ عند استلام صورة (تمرين أو درس)
+1. اقرأ محتوى الصورة بدقة.
+2. لخّص المطلوب.
+3. اشرح المنهجية خطوة بخطوة.
+4. اعرض الحل الكامل.
+5. اقترح تمريناً مشابهاً (اختياري).
 
-9. القيود العلمية الصارمة:
-- يُمنع منعاً باتاً استخدام قاعدة لوبيتال (L'Hôpital).
-- استخدم تنسيق LaTeX لكتابة المعادلات الرياضية.
+# 🗣️ الذكاء العام
+- يمكنك الإجابة عن أسئلة عامة (ثقافة، تاريخ، تقنية) بشرط أن تكون مفيدة للطالب.
+- لا تدخل في مواضيع سياسية حساسة أو دينية خلافية.
 
-10. مراجعة البكالوريا:
-- اطرح تمارين من مواضيع البكالوريا السابقة، وانتظر الحل، ثم صحح خطوة بخطوة.
-
-11. الدعم النفسي التربوي:
-- أنت مرافق نفسي. إذا لاحظت توتراً، توقف فوراً، طمئنه بأسلوب أبوي حنون، وقدم له نصائح للتهدئة، ثم عُد للدرس بلطف.
-
-12. تحليل الصور (بدون اعتذارات تقنية):
-- إذا أرسل التلميذ صورة، وحللت الصورة بنجاح: اشرح الخطوات بالتفصيل.
-- إذا لم تتمكن من رؤية الصورة بوضوح: لا تعتذر بأسلوب تقني مزعج. بل قل ببساطة: "الصورة غير واضحة يا صديقي، هل يمكنك إعادة تصويرها بإضاءة أفضل؟ أو اكتب لي النص وسأحله لك فوراً".
-
-13. التقييم القبلي (Pre-assessment):
-- قبل شرح أي درس جديد أو حل أي تمرين معقد، قم بتقييم سريع لمستوى التلميذ.
-- اطرح سؤالاً بسيطاً واحداً يتعلق بالمفهوم الأساسي.
-- إذا أجاب التلميذ بشكل صحيح، انتقل مباشرة للشرح.
-- إذا لم يجب أو أخطأ، قل له بلطف: "يبدو أننا نحتاج إلى مراجعة الأساسيات أولاً. دعنا نبدأ بـ [المفهوم الأساسي] ثم نعود إلى [الموضوع المطلوب]".
+# ✍️ التوقيع
+في نهاية كل رد مهم، أضف سطراً منفصلاً:
+> 🤖 **OustadDz** — Powered by **Qimah Production** 🇩🇿
 """
 
-try:
-    client = genai.Client(api_key=GEMINI_API_KEY)
-except Exception as e:
-    client = None
+# =========================================================
+# نماذج الطلبات (Pydantic)
+# =========================================================
+class ChatRequest(BaseModel):
+    message: str
+    image_base64: Optional[str] = None
+    subject: Optional[str] = None
+    level: Optional[str] = None
 
-def call_gemini(contents, system_instruction):
-    if not client: return None
-    try:
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=contents,
-            config=types.GenerateContentConfig(system_instruction=system_instruction, temperature=0.3)
-        )
-        return response.text if response.text else None
-    except Exception as e:
-        print(f"⚠️ Gemini Error: {e}")
-        return None
+class ChatResponse(BaseModel):
+    reply: str
+    engine: str
 
-def call_groq(contents, system_instruction):
-    if not GROQ_API_KEY: return None
-    try:
-        headers = {"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"}
-        data = {
-            "model": "openai/gpt-oss-20b",
-            "messages": [{"role": "system", "content": system_instruction}, {"role": "user", "content": contents}],
-            "temperature": 0.3
-        }
-        response = requests.post("https://api.groq.com/openai/v1/chat/completions", headers=headers, json=data, timeout=15)
-        if response.status_code == 200:
-            return response.json()['choices'][0]['message']['content']
-        else:
-            return None
-    except Exception as e:
-        return None
+# =========================================================
+# إعداد FastAPI
+# =========================================================
+app = FastAPI(title="OustadDz API", version="1.0.0")
 
-def chat_response(message, history, image_path):
-    try:
-        # ✅ معالجة الصورة (إذا تم رفعها)
-        if image_path and client:
-            with open(image_path, "rb") as f:
-                image_bytes = f.read()
-            
-            mime_type = "image/jpeg"
-            if image_path.lower().endswith(".png"):
-                mime_type = "image/png"
-            elif image_path.lower().endswith(".webp"):
-                mime_type = "image/webp"
-            
-            response = client.models.generate_content(
-                model="gemini-2.5-flash",
-                contents=[
-                    types.Part.from_text(message if message else "حلل هذه الصورة الرياضية واشرحها لي."),
-                    types.Part.from_bytes(data=image_bytes, mime_type=mime_type)
-                ],
-                config=types.GenerateContentConfig(system_instruction=prompt, temperature=0.3)
-            )
-            return response.text if response.text else "عذراً، لم أتمكن من تحليل الصورة."
-
-        # ✅ معالجة النص العادي
-        if len(history) == 0:
-            welcome_msg = "أهلاً بك! أنا مساعدك الأكاديمي في الرياضيات للثالثة ثانوي. كيف يمكنني مساعدتك اليوم؟"
-            return welcome_msg
-
-        conversation_context = ""
-        for item in history:
-            if isinstance(item, dict):
-                role = item.get("role", "user")
-                content = item.get("content", "")
-                if isinstance(content, list):
-                    text_part = ""
-                    for block in content:
-                        if isinstance(block, dict) and block.get("type") == "text":
-                            text_part += block.get("text", "")
-                    content = text_part
-                
-                if role == "user":
-                    conversation_context += f"Student: {content}\n"
-                elif role == "assistant":
-                    conversation_context += f"OustadDz: {content}\n"
-        
-        conversation_context += f"Student: {message}\nOustadDz:"
-
-        res = call_gemini(conversation_context, prompt)
-        if res: return res
-        
-        res = call_groq(conversation_context, prompt)
-        if res: return res
-
-        return "عذراً، الخوادم مشغولة حالياً. يرجى المحاولة بعد قليل."
-    
-    except Exception as e:
-        print(f"⚠️ Chat Error: {e}")
-        return "حدث خطأ غير متوقع. يرجى المحاولة."
-
-# ✅ CSS مخصص
-custom_css = """
-footer {visibility: hidden !important;}
-"""
-
-with gr.Blocks(css=custom_css) as demo:
-    gr.Markdown("<h1 style='text-align: center; margin-bottom: 0;'>OustadDz - أستاذ الرياضيات</h1>")
-    gr.Markdown("<p style='text-align: center; font-size: 16px; color: #444; margin-top: 5px;'>رفيقك في رياضيات الثالثة ثانوي.</p>")
-
-    # ✅ الشريط الجانبي (Sidebar) مع صورة صغيرة
-    with gr.Sidebar():
-        gr.Markdown("### 📎 أرفق صورة التمرين")
-        image_input = gr.Image(
-            type="filepath",
-            label="صورة التمرين",
-            height=80,  # ✅ صغير جداً
-            show_label=False
-        )
-
-    # ✅ الشات
-    chat = gr.ChatInterface(
-        fn=chat_response,
-        additional_inputs=[image_input],
-        textbox=gr.Textbox(placeholder="اكتب سؤالك هنا..."),
-        chatbot=gr.Chatbot(
-            avatar_images=(None, BOT_AVATAR_PATH),
-            height=500,
-            latex_delimiters=[
-                {"left": "$$", "right": "$$", "display": True},
-                {"left": "$", "right": "$", "display": False}
-            ]
-        ),
-        save_history=True
-    )
-    
-    chat.saved_conversations.secret = "oustad_dz_secret_2026"
-    chat.saved_conversations.storage_key = "_oustad_dz_saved_conversations"
-    
-    gr.HTML("""
-    <div translate="no" style='text-align: center; margin-top: 15px;'>
-        <p style='font-size: 12px; color: #888; margin-bottom: 5px;'>This is an AI assistant. It may make mistakes.</p>
-        <p style='font-weight: bold; color: #666; font-size: 14px;'>Powered by Qimah Production | v1.0</p>
-    </div>
-    """)
-
-demo.queue().launch(
-    server_name="0.0.0.0", 
-    server_port=int(os.environ.get("PORT", 7860)), 
-    pwa=True,
-    favicon_path=BOT_AVATAR_PATH,
-    theme=gr.themes.Soft()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
+
+# =========================================================
+# دوال مساعدة
+# =========================================================
+def _decode_image(b64: str) -> Image.Image:
+    if "," in b64:
+        b64 = b64.split(",", 1)[1]
+    raw = base64.b64decode(b64)
+    img = Image.open(io.BytesIO(raw))
+    if img.mode not in ("RGB", "L"):
+        img = img.convert("RGB")
+    return img
+
+def _build_user_prompt(req: ChatRequest) -> str:
+    parts = []
+    if req.level: parts.append(f"المستوى الدراسي: {req.level}")
+    if req.subject: parts.append(f"المادة: {req.subject}")
+    parts.append(f"رسالة الطالب: {req.message}")
+    return "\n".join(parts)
+
+def _call_gemini(req: ChatRequest) -> str:
+    model = genai.GenerativeModel(
+        model_name="gemini-1.5-flash",
+        system_instruction=GOLDEN_PROMPT,
+    )
+    contents = [_build_user_prompt(req)]
+    if req.image_base64:
+        contents.append(_decode_image(req.image_base64))
+    response = model.generate_content(contents)
+    return (response.text or "").strip()
+
+def _call_groq(req: ChatRequest) -> str:
+    if groq_client is None:
+        raise RuntimeError("GROQ_API_KEY غير مهيأ")
+    completion = groq_client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=[
+            {"role": "system", "content": GOLDEN_PROMPT},
+            {"role": "user", "content": _build_user_prompt(req)},
+        ],
+        temperature=0.6,
+        max_tokens=2048,
+    )
+    return (completion.choices[0].message.content or "").strip()
+
+# =========================================================
+# المسارات (Endpoints)
+# =========================================================
+@app.get("/")
+def root():
+    return {"app": "OustadDz", "status": "running", "signature": "Powered by Qimah Production"}
+
+@app.get("/health")
+def health():
+    return {"status": "ok", "gemini": bool(GEMINI_API_KEY), "groq": bool(GROQ_API_KEY)}
+
+@app.post("/chat", response_model=ChatResponse)
+def chat(req: ChatRequest):
+    if not req.message and not req.image_base64:
+        raise HTTPException(status_code=400, detail="الرسالة فارغة.")
+
+    if req.image_base64:
+        if not GEMINI_API_KEY:
+            raise HTTPException(status_code=503, detail="Gemini غير مهيأ لمعالجة الصور.")
+        try:
+            reply = _call_gemini(req)
+            return ChatResponse(reply=reply, engine="gemini-1.5-flash")
+        except Exception as e:
+            raise HTTPException(status_code=502, detail=f"فشل Gemini: {e}")
+
+    if GEMINI_API_KEY:
+        try:
+            reply = _call_gemini(req)
+            return ChatResponse(reply=reply, engine="gemini-1.5-flash")
+        except Exception as e:
+            logger.warning(f"Gemini فشل، التحويل إلى Groq: {e}")
+
+    if groq_client is not None:
+        try:
+            reply = _call_groq(req)
+            return ChatResponse(reply=reply, engine="llama-3.3-70b-versatile")
+        except Exception as e:
+            raise HTTPException(status_code=502, detail=f"فشل الخادم: {e}")
+
+    raise HTTPException(status_code=503, detail="لا يوجد أي محرك متاح.")
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.exception("خطأ غير متوقع")
+    return JSONResponse(status_code=500, content={"detail": "حدث خطأ داخلي غير متوقع في الخادم."})
