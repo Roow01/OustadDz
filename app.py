@@ -126,35 +126,23 @@ def call_groq(contents, system_instruction):
     except Exception as e:
         return None
 
-def chat_response(message, history):
+def chat_response(message, history, image):
     try:
-        # ✅ معالجة الرسائل النصية البسيطة (مثل "؟")
-        if isinstance(message, str):
-            text_content = message
-            image_path = None
-        # ✅ معالجة الرسائل التي تحتوي على صور (قاموس)
-        elif isinstance(message, dict):
-            text_content = message.get("text", "")
-            files = message.get("files", [])
-            image_path = files[0] if files else None
-        else:
-            return "حدث خطأ غير متوقع. يرجى المحاولة."
-
         # ✅ إذا كانت هناك صورة، أرسلها إلى Gemini
-        if image_path and client:
-            with open(image_path, "rb") as f:
+        if image is not None and client:
+            with open(image, "rb") as f:
                 image_bytes = f.read()
             
             mime_type = "image/jpeg"
-            if image_path.lower().endswith(".png"):
+            if image.lower().endswith(".png"):
                 mime_type = "image/png"
-            elif image_path.lower().endswith(".webp"):
+            elif image.lower().endswith(".webp"):
                 mime_type = "image/webp"
             
             response = client.models.generate_content(
                 model="gemini-2.5-flash",
                 contents=[
-                    types.Part.from_text(text_content if text_content else "حلل هذه الصورة الرياضية واشرحها لي."),
+                    types.Part.from_text(message if message else "حلل هذه الصورة الرياضية واشرحها لي."),
                     types.Part.from_bytes(data=image_bytes, mime_type=mime_type)
                 ],
                 config=types.GenerateContentConfig(system_instruction=prompt, temperature=0.3)
@@ -183,7 +171,7 @@ def chat_response(message, history):
                 elif role == "assistant":
                     conversation_context += f"OustadDz: {content}\n"
         
-        conversation_context += f"Student: {text_content}\nOustadDz:"
+        conversation_context += f"Student: {message}\nOustadDz:"
 
         res = call_gemini(conversation_context, prompt)
         if res: return res
@@ -223,12 +211,8 @@ with gr.Blocks(css=custom_css) as demo:
 
     chat = gr.ChatInterface(
         fn=chat_response,
-        multimodal=True,
-        textbox=gr.MultimodalTextbox(
-            placeholder="اكتب سؤالك أو أرفق صورة لتمرين...",
-            file_types=["image"],
-            show_label=False
-        ),
+        additional_inputs=[gr.Image(type="filepath", label="أرفق صورة (اختياري)")],
+        textbox=gr.Textbox(placeholder="اكتب سؤالك هنا..."),
         chatbot=gr.Chatbot(
             avatar_images=(None, BOT_AVATAR_PATH),
             height=500,
