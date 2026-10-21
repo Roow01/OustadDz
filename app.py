@@ -3,7 +3,6 @@ import gradio as gr
 from google import genai
 from google.genai import types
 import requests
-import base64
 
 # المفاتيح من إعدادات Render
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
@@ -212,9 +211,17 @@ footer {visibility: hidden !important;}
 }
 """
 
+# ✅ استخدام BrowserState لحفظ المحادثات في متصفح المستخدم
 with gr.Blocks(css=custom_css) as demo:
     gr.Markdown("<h1 style='text-align: center; margin-bottom: 0;'>OustadDz - أستاذ الرياضيات</h1>")
     gr.Markdown("<p style='text-align: center; font-size: 16px; color: #444; margin-top: 5px;'>رفيقك في رياضيات الثالثة ثانوي.</p>")
+
+    # حالة المتصفح لحفظ المحادثات
+    chat_history_state = gr.BrowserState(
+        default_value=[],
+        storage_key="oustad_dz_chat_history",
+        secret="oustad_dz_secret_2026"
+    )
 
     chat = gr.ChatInterface(
         fn=chat_response,
@@ -235,13 +242,13 @@ with gr.Blocks(css=custom_css) as demo:
         save_history=True
     )
     
-    chat.saved_conversations.secret = "oustad_dz_secret_2026"
-    chat.saved_conversations.storage_key = "_oustad_dz_saved_conversations"
+    # ربط حالة المتصفح بالشات
+    chat.saved_conversations = chat_history_state
     
     gr.HTML("""
     <div translate="no" style='text-align: center; margin-top: 15px;'>
         <p style='font-size: 12px; color: #888; margin-bottom: 5px;'>This is an AI assistant. It may make mistakes.</p>
-        <p style='font-weight: bold; color: #666; font-size: 14px;'>Powered by Qimah Production | v1.0</p>
+        <p style='font-weight: bold; color: #666; font-size: 14px;'>Powered by Qimah Production | v2.0</p>
     </div>
     """)
 
