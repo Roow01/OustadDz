@@ -185,7 +185,7 @@ def chat(req: ChatRequest):
         except Exception as e:
             logger.error(f"Gemini failed: {e}")
 
-    raise HTTPException(status_code=502, detail=
+    raise HTTPException(status_code=502, detail="عذراً، الخوادم مشغولة حالياً. يرجى المحاولة بعد قليل.")
 
                         
 # =========================================================
