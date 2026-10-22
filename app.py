@@ -131,7 +131,7 @@ def _build_user_prompt(req: ChatRequest) -> str:
 
 def _call_gemini(req: ChatRequest) -> str:
     model = genai.GenerativeModel(
-        model_name="gemini-2.0-flash",
+        model_name="gemini-2.5-flash",
         system_instruction=GOLDEN_PROMPT,
     )
     contents = [_build_user_prompt(req)]
