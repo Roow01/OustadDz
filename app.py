@@ -185,4 +185,24 @@ def chat(req: ChatRequest):
         except Exception as e:
             logger.error(f"Gemini failed: {e}")
 
-    raise HTTPException(status_code=502, detail="عذراً، جميع الخوادم مشغولة حالياً. يرجى المحاولة بعد قليل.")
+    raise HTTPException(status_code=502, detail=
+
+                        
+# =========================================================
+# مسارات الفحص الأساسية (مهمة جداً لـ UptimeRobot و Render)
+# =========================================================
+@app.get("/")
+def root():
+    return {
+        "app": "OustadDz",
+        "status": "running",
+        "signature": "Powered by Qimah Production"
+    }
+
+@app.get("/health")
+def health():
+    return {
+        "status": "ok",
+        "gemini": bool(GEMINI_API_KEY),
+        "groq": bool(GROQ_API_KEY)
+    }
