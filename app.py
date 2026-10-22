@@ -131,7 +131,7 @@ def _build_user_prompt(req: ChatRequest) -> str:
 
 def _call_gemini(req: ChatRequest) -> str:
     model = genai.GenerativeModel(
-        model_name="gemini-2.5-flash",
+        model_name="gemini-3.8-flash",
         system_instruction=GOLDEN_PROMPT,
     )
     contents = [_build_user_prompt(req)]
@@ -144,7 +144,7 @@ def _call_groq(req: ChatRequest) -> str:
     if groq_client is None:
         raise RuntimeError("GROQ_API_KEY غير مهيأ")
     completion = groq_client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
+        model="llama-3.1-70b-versatile",
         messages=[
             {"role": "system", "content": GOLDEN_PROMPT},
             {"role": "user", "content": _build_user_prompt(req)},
