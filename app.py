@@ -107,7 +107,7 @@ def _call_groq(req: ChatRequest) -> str:
     if groq_client is None:
         raise RuntimeError("GROQ_API_KEY غير مهيأ")
     completion = groq_client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
+        model="openai/gpt-oss-120b",
         messages=[
             {"role": "system", "content": GOLDEN_PROMPT},
             {"role": "user", "content": _build_user_prompt(req)},
