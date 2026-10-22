@@ -9,10 +9,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from PIL import Image
 
-# استدعاء مكتبات المحركات الثلاثة
+# استدعاء المحركات الثلاثة
 import google.generativeai as genai
 from groq import Groq
 from openai import OpenAI
+
+# استدعاء ملف المنهاج الموسع
+from curriculum_data import CURRICULUM_DATA
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("OustadDz")
@@ -28,113 +31,31 @@ genai.configure(api_key=GEMINI_API_KEY)
 groq_client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
 openrouter_client = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=OPENROUTER_API_KEY) if OPENROUTER_API_KEY else None
 
-# =========================================================
-# 1. القاعدة المعرفية: النص الكامل الذي زودتني به
-# =========================================================
-algerian_high_school_knowledge = """
-# الدليل الشامل للبرنامج والتدرج السنوي للتعليم الثانوي الجزائري (موسم 2026/2027)
-
-## 1. السنة الأولى ثانوي (الجذوع المشتركة)
-- جذع مشترك علوم وتكنولوجيا (ج.م.ع.ت): رياضيات (الأعداد، الدوال، الهندسة، الإحصاء)، فيزياء (الحركة، الكيمياء)، علوم طبيعية (التركيب الضوئي، التحكم العصبي).
-- جذع مشترك آداب (ج.م.آ): لغة عربية (الأدب الجاهلي والإسلامي، البلاغة)، تاريخ وجغرافيا (العالم الإسلامي).
-
-## 2. السنة الثانية ثانوي (التخصصات)
-- علوم تجريبية + رياضيات: رياضيات (الاشتقاقية، المتتاليات، الحساب المثلثي)، فيزياء (الطاقة، الناقلية، الأحماض والقواعد)، علوم (التنظيم العصبي، التكتونية).
-- تسيير واقتصاد: المحاسبة، الاقتصاد، التسيير المالي.
-- آداب وفلسفة / لغات: الفلسفة (السؤال العلمي)، اللغة، التاريخ.
-
-## 3. السنة الثالثة ثانوي (قسم البكالوريا)
-- الشعب العلمية والتقنية:
-  - رياضيات: النهايات، الدوال الأسية واللوغاريتمية، المتتاليات، التكامل، الأعداد المركبة، الهندسة الفضائية، الاحتمالات.
-  - فيزياء: المتابعة الزمنية، التحولات النووية، الظواهر الكهربائية (RC, RL)، التوازن الكيميائي، الميكانيك (نيوتن، الكواكب).
-  - علوم طبيعية: تركيب البروتين، التحويلات الطاقوية، التكتونية.
-- شعبة آداب وفلسفة:
-  - فلسفة: إدراك العالم الخارجي، الأخلاق، فلسفة العلوم.
-  - لغة عربية: عصر الضعف، عصر النهضة (الثورة الجزائرية)، المقالة النقدية.
-"""
+# تحويل بيانات المنهاج إلى نص مقروء ومفصل للذكاء الاصطناعي
+curriculum_text = json.dumps(CURRICULUM_DATA, ensure_ascii=False, indent=2)
 
 # =========================================================
-# 2. الهيكل المنظم للمواد والمعاملات (لزيادة الدقة)
-# =========================================================
-OFFICIAL_CURRICULUM = {
-    "3AS": {
-        "sciences_experimentales": {
-            "name": "علوم تجريبية",
-            "core_subjects": ["علوم الطبيعة والحياة", "علوم فيزيائية", "رياضيات"],
-            "coefficients": {"sciences": 6, "physics": 5, "math": 5, "arabic": 3, "french": 2, "english": 2, "history_geo": 2, "philosophy": 2, "islamic": 2},
-            "main_axes": {
-                "math": ["النهايات والاستمرارية", "الاشتقاقية", "الدوال الأسية واللوغاريتمية", "المتتاليات", "التكامل", "الأعداد المركبة", "الهندسة الفضائية", "الاحتمالات"],
-                "physics": ["المتابعة الزمنية", "التحولات النووية", "الظواهر الكهربائية (RC, RL)", "التوازن الكيميائي", "الميكانيك (نيوتن، الكواكب)"],
-                "sciences": ["تركيب البروتين", "التحويلات الطاقوية", "التكتونية"]
-            }
-        },
-        "mathematiques": {
-            "name": "رياضيات",
-            "core_subjects": ["رياضيات", "علوم فيزيائية"],
-            "coefficients": {"math": 7, "physics": 6, "sciences": 2, "arabic": 3, "french": 2, "english": 2, "history_geo": 2, "philosophy": 2, "islamic": 2},
-            "main_axes": {
-                "math": ["النهايات والاستمرارية", "الاشتقاقية والتزايد المقارن", "التوسع التام", "المعادلات التفاضلية", "المتتاليات والتراجع", "الدوال الأصلية والتكامل الموسع", "الأعداد المركبة والتحويلات النقطية", "الجداء السلمي", "القسمة والموافقات (غوص وغوس)", "الاحتمالات الشرطية والتوزيعات"]
-            }
-        },
-        "technique_mathematique": {
-            "name": "تقني رياضي",
-            "core_subjects": ["تكنولوجيا", "رياضيات", "علوم فيزيائية"],
-            "coefficients": {"technology": 6, "math": 6, "physics": 5, "arabic": 3, "french": 2, "english": 2, "history_geo": 2, "philosophy": 2, "islamic": 2},
-            "main_axes": {
-                "math": ["النهايات والاستمرارية", "الاشتقاقية", "التوسع التام", "المتتاليات والتراجع", "الدوال الأصلية والتكامل", "الأعداد المركبة والتحويلات", "الجداء السلمي", "القسمة في Z والموافقات", "الاحتمالات الشرطية"]
-            }
-        },
-        "gestion_economie": {
-            "name": "تسيير واقتصاد",
-            "core_subjects": ["تسيير محاسبي ومالي", "اقتصاد ومناجمنت", "رياضيات", "قانون"],
-            "coefficients": {"gestion": 6, "economy": 5, "math": 5, "history_geo": 4, "arabic": 3, "french": 2, "english": 2, "philosophy": 2, "islamic": 2},
-            "main_axes": {
-                "math": ["الدوال العددية والتزايد (تطبيقات اقتصادية)", "الدالة الأسية واللوغاريتمية", "المتتاليات الحسابية والهندسية (الفوائد)", "الإحصاء لمتغيرين (المربعات الدنيا)", "المصفوفات والأنظمة", "الاحتمالات الشرطية"]
-            }
-        },
-        "lettres_philosophie": {
-            "name": "آداب وفلسفة",
-            "core_subjects": ["فلسفة", "لغة عربية", "تاريخ وجغرافيا", "لغات"],
-            "coefficients": {"philosophy": 6, "arabic": 6, "history_geo": 4, "english": 3, "french": 2, "math": 2, "islamic": 2},
-            "main_axes": {
-                "math": ["القسمة الإقليدية والموافقات في Z", "المتتاليات الحسابية والهندسية", "الدوال العددية (كثيرة الحدود من الدرجة 2 و 3)"],
-                "philosophy": ["إدراك العالم الخارجي", "الأخلاق بين المطلق والنسبي", "فلسفة العلوم"],
-                "arabic": ["عصر الضعف والانحطاط", "عصر النهضة والالتزام (الثورة الجزائرية)", "المقالة النقدية"]
-            }
-        }
-    }
-}
-
-# تحويل الهيكل إلى نص مقروء للذكاء الاصطناعي
-curriculum_json_str = json.dumps(OFFICIAL_CURRICULUM, ensure_ascii=False, indent=2)
-
-# =========================================================
-# 3. البرومبت الذهبي (أستاذ خبير + كشف قبلي + ذكاء عام)
+# البرومبت الذهبي (أستاذ خبير + كشف قبلي + بدون خلط)
 # =========================================================
 GOLDEN_PROMPT = f"""أنت "OustadDz" (أستاذ Dz). 
-أنت ذكاء اصطناعي عام وشامل (بقوة ChatGPT)، وتتقمص شخصية أستاذ خبير ومحترف في المنظومة التربوية الجزائرية للطور الثانوي (جميع المواد، الشعب، والمستويات 1، 2، 3 ثانوي - 2026/2027).
+أنت ذكاء اصطناعي عام وشامل (بقوة ChatGPT)، وتتقمص شخصية أستاذ خبير ومحترف في المنظومة التربوية الجزائرية للطور الثانوي.
 
-# 📚 مرجعيتك الأساسية (النص الكامل):
-{algerian_high_school_knowledge}
+# 📚 قاعدة بيانات المنهاج الرسمي (2026/2027) - مرجعك الوحيد:
+{curriculum_text}
 
-# 🗂️ هيكل المواد والمعاملات الرسمي:
-{curriculum_json_str}
-
-# 🧠 ميزة "الكشف القبلي" (Diagnostic Assessment):
-أنت أستاذ بيداغوجي. إذا لاحظت أن الطالب لا يفهم الدرس أو التمرين، **يُمنع إعطاؤه الحل مباشرة**. قم بتفعيل الكشف القبلي:
-1. اطرح سؤالاً بسيطاً للتأكد من المكتسبات القبلية (مثال: إذا لم يفهم الاشتقاقية، تأكد أولاً أنه يفهم النهايات).
-2. إذا كان ينقصه الأساس، اشرح الأساس ببساطة، ثم اصعد بالتدريج للدرس الحالي.
-
-# 🎯 قواعد صارمة:
-1. **ممنوع الثرثرة:** لا تبدأ بعبارات الترحيب المكررة. ادخل في صلب الموضوع فوراً. (إذا سلم عليك الطالب، رد بترحيب قصير جداً: "مرحباً! كيف أساعدك في دراستك اليوم؟").
-2. **الذاكرة:** أنت في محادثة مستمرة، لا تطلب إعادة الشرح.
-3. **الأسلوب:** مشجع، واذكر المصطلحات بالفرنسية للمواد العلمية (مثال: الاشتقاقية (Dérivation)).
-4. **الصور:** اقرأ التمرين في الصورة، حلله، وطبق الكشف القبلي إذا لزم.
-5. **اللغة:** أجب بنفس لغة المستخدم.
+# 🧠 قواعد صارمة جداً (الالتزام الحرفي):
+1. **الاعتماد الحصري:** اعتمد حصرياً على "قاعدة بيانات المنهاج" أعلاه للإجابة عن أي سؤال يخص الدروس، المحاور، التوزيع الفصلي، أو التغييرات الجديدة.
+2. **التمييز بين الشعب (حرج جداً):** لا تخلط بين المواد أو الشعب. إذا سألك طالب، حدد مستواه وشعبته أولاً، ثم أجب من البيانات المخصصة لشعبته فقط. (مثال: مادة الفيزياء في "جذع مشترك آداب" هي "المحلول المائي"، بينما في "علوم" هي "النوع الكيميائي"). لا تعطِ دروساً لشعبة غير موجودة في قاعدة البيانات.
+3. **الكشف القبلي:** إذا لاحظت أن الطالب لا يفهم، اسأله سؤالاً بسيطاً للتأكد من المكتسبات القبلية، ثم اصعد معه بالتدريج.
+4. **ممنوع الثرثرة:** لا تبدأ بعبارات الترحيب المكررة. ادخل في صلب الموضوع فوراً.
+5. **الذاكرة:** أنت في محادثة مستمرة، لا تطلب إعادة الشرح.
+6. **الأسلوب:** مشجع، واذكر المصطلحات بالفرنسية للمواد العلمية.
+7. **الصور:** اقرأ التمرين، حلله، واشرحه.
+8. **اللغة:** أجب بنفس لغة المستخدم.
 """
 
 # =========================================================
-# 4. إعدادات الخادم والنماذج
+# إعدادات الخادم
 # =========================================================
 class ChatMessage(BaseModel):
     role: str
@@ -159,7 +80,7 @@ app.add_middleware(
 )
 
 # =========================================================
-# 5. دوال المعالجة (المحركات الثلاثة)
+# دوال المعالجة (المحركات الثلاثة)
 # =========================================================
 def _decode_image(b64: str) -> Image.Image:
     if "," in b64: b64 = b64.split(",", 1)[1]
@@ -173,7 +94,7 @@ def _call_gemini(req: ChatRequest) -> str:
     
     contents = []
     if req.history:
-        for msg in req.history[-4:]: # آخر 4 رسائل للسياق
+        for msg in req.history[-4:]:
             role = "user" if msg.role == "user" else "model"
             contents.append({"role": role, "parts": [msg.content]})
             
@@ -194,21 +115,12 @@ def _call_openrouter(req: ChatRequest) -> str:
             messages.append({"role": msg.role, "content": msg.content})
     
     if req.image_base64:
-        messages.append({
-            "role": "user",
-            "content": [
-                {"type": "text", "text": req.message},
-                {"type": "image_url", "image_url": {"url": req.image_base64}}
-            ]
-        })
+        messages.append({"role": "user", "content": [{"type": "text", "text": req.message}, {"type": "image_url", "image_url": {"url": req.image_base64}}]})
     else:
         messages.append({"role": "user", "content": req.message})
         
     response = openrouter_client.chat.completions.create(
-        model="openai/gpt-4o-mini",
-        messages=messages,
-        temperature=0.3,
-        max_tokens=2048,
+        model="openai/gpt-4o-mini", messages=messages, temperature=0.3, max_tokens=2048,
     )
     return (response.choices[0].message.content or "").strip()
 
@@ -222,58 +134,38 @@ def _call_groq(req: ChatRequest) -> str:
     
     if req.image_base64:
         b64_data = req.image_base64.split(",")[-1]
-        content = [
-            {"type": "text", "text": req.message},
-            {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64_data}"}}
-        ]
-        messages.append({"role": "user", "content": content})
+        messages.append({"role": "user", "content": [{"type": "text", "text": req.message}, {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64_data}"}}]})
         model_name = "llama-3.2-90b-vision-preview"
     else:
         messages.append({"role": "user", "content": req.message})
         model_name = "openai/gpt-oss-120b"
         
     completion = groq_client.chat.completions.create(
-        model=model_name,
-        messages=messages,
-        temperature=0.3,
-        max_tokens=2048,
+        model=model_name, messages=messages, temperature=0.3, max_tokens=2048,
     )
     return (completion.choices[0].message.content or "").strip()
 
 # =========================================================
-# 6. نقطة النهاية (Endpoint)
+# نقطة النهاية
 # =========================================================
 @app.post("/chat", response_model=ChatResponse)
 def chat(req: ChatRequest):
     if not req.message and not req.image_base64:
         raise HTTPException(status_code=400, detail="الرسالة فارغة.")
 
-    # 1. المحاولة بـ Gemini أولاً
     if GEMINI_API_KEY:
         try:
-            reply = _call_gemini(req)
-            logger.info("تم الرد بواسطة Gemini")
-            return ChatResponse(reply=reply)
-        except Exception as e:
-            logger.warning(f"Gemini failed: {e}")
+            return ChatResponse(reply=_call_gemini(req))
+        except Exception as e: logger.warning(f"Gemini failed: {e}")
 
-    # 2. المحاولة بـ OpenRouter (احتياطي قوي)
     if OPENROUTER_API_KEY:
         try:
-            reply = _call_openrouter(req)
-            logger.info("تم الرد بواسطة OpenRouter")
-            return ChatResponse(reply=reply)
-        except Exception as e:
-            logger.warning(f"OpenRouter failed: {e}")
+            return ChatResponse(reply=_call_openrouter(req))
+        except Exception as e: logger.warning(f"OpenRouter failed: {e}")
 
-    # 3. المحاولة بـ Groq (احتياطي ثالث)
     if GROQ_API_KEY:
         try:
-            reply = _call_groq(req)
-            logger.info("تم الرد بواسطة Groq")
-            return ChatResponse(reply=reply)
-        except Exception as e:
-            logger.error(f"Groq failed: {e}")
+            return ChatResponse(reply=_call_groq(req))
+        except Exception as e: logger.error(f"Groq failed: {e}")
 
-    # إذا فشلت كل المحاولات
     raise HTTPException(status_code=502, detail="عذراً، الخوادم مشغولة حالياً. يرجى المحاولة بعد قليل.")
