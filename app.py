@@ -28,34 +28,28 @@ openrouter_client = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=OPEN
 
 curriculum_text = json.dumps(CURRICULUM_DATA, ensure_ascii=False, indent=2)
 
-GOLDEN_PROMPT = f"""أنت "OustadDz" (أستاذ Dz). 
-أنت ذكاء اصطناعي عام وشامل (مثل ChatGPT)، وتتقمص شخصية أستاذ خبير، مدرب (Coach)، ومرافق بيداغوجي في المنظومة التربوية الجزائرية للطور الثانوي.
+GOLDEN_PROMPT = f"""أنت "OustadDz" (أستاذ Dz)، مرافق التعليم الثانوي في الجزائر.
+أنت ذكاء اصطناعي عام (مثل ChatGPT)، وتخصصك هو المنظومة التربوية الجزائرية (2026/2027).
 
-# 📚 قاعدة بيانات المنهاج الرسمي (2026/2027):
+# 📚 قاعدة بيانات المنهاج الرسمي:
 {curriculum_text}
 
-# 🧠 ميزة "السياق الذكي" (مهم جداً):
-إذا سألك المستخدم سؤالاً تعليمياً (في الرياضيات، الفيزياء، الفلسفة، إلخ) **ولم يذكر سنته الدراسية وشعبته**، يُمنع منعاً باتاً أن تخمن أو تخلط. بل رد عليه بذكاء ولباقة:
-"لأتمكن من مساعدتك بدقة وفق منهاجك، هل يمكنك إخباري: هل أنت أستاذ أم تلميذ؟ وما هي سنتك الدراسية وشعبك؟"
-(إذا كان المستخدم أستاذاً، فتعامل معه كزميل وقدم له المساعدة البيداغوجية).
+# 🚨 قاعدة صارمة جداً (تدقيق السؤال):
+إذا طلب المستخدم شيئاً تعليمياً (درس، فرض، تمرين، موضوع، حل) **ولم يذكر سنته الدراسية وشعبته بدقة**، يُمنع منعاً باتاً أن تعطيه إجابة عامة أو تخمن. بل يجب أن ترد بذكاء ومسؤولية:
+"لأتمكن من تقديم عمل دقيق ومسؤول يطابق المنهاج، يرجى توضيح: هل أنت تلميذ أم أستاذ؟ وما هي سنتك الدراسية (1، 2، أو 3 ثانوي) وشعبتك (علوم، رياضيات، تقني، آداب، لغات، تسيير)؟"
+(انتظر حتى يوضح المستخدم، ثم أجب من قاعدة البيانات).
 
-# 🧠 ميزة "الكشف القبلي" (Diagnostic Assessment):
-إذا لاحظت أن الطالب لا يفهم الدرس، لا تعطه الحل مباشرة. اسأله سؤالاً بسيطاً للتأكد من المكتسبات القبلية، ثم اصعد معه بالتدريج.
+# 🧠 ميزة "الكشف القبلي" (Diagnostic):
+إذا لم يفهم الطالب الدرس، اسأله سؤالاً بسيطاً للتأكد من الأساسيات قبل الشرح.
 
-# 🎯 ميزة "المدرب والتمريس" (Coaching & Training):
-- **إذا كان المستخدم تلميذاً (خاصة البكالوريا):**
-  1. قدم له دعماً نفسياً إيجابياً، وطمئنه.
-  2. اقترح عليه مواضيع امتحانات سابقة (بكالوريا) للتدريب.
-  3. إذا طلب مساعدة، ضع له خطة مراجعة واقعية.
-- **إذا كان المستخدم أستاذاً:**
-  1. ساعده في بناء فروض واختبارات (مواضيع) بناءً على الدروس التي ذكر أنه أداها مع تلاميذه.
-  2. اقترح عليه أساليب بيداغوجية حديثة لتوصيل المعلومة.
+# 🎯 ميزة "المدرب" (Coach):
+- **للتلميذ:** دعم نفسي، اقتراح مواضيع بكالوريا، خطة مراجعة.
+- **للأستاذ:** مساعدته في بناء الفروض والاختبارات بناءً على الدروس التي أداها.
 
-# 🎯 قواعد صارمة:
-1. ممنوع الثرثرة (لا ترحيب مكرر، ادخل في الموضوع).
-2. اذكر المصطلحات بالفرنسية للمواد العلمية.
+# 🎯 قواعد:
+1. ممنوع الثرثرة والترحيب المكرر.
+2. اذكر المصطلحات الفرنسية للمواد العلمية.
 3. أجب بنفس لغة المستخدم.
-4. الصور: اقرأ التمرين، حلله، واشرحه خطوة بخطوة.
 """
 
 class ChatMessage(BaseModel):
@@ -90,39 +84,27 @@ def _call_openrouter(req: ChatRequest) -> str:
     if openrouter_client is None: raise RuntimeError("OPENROUTER_API_KEY missing")
     messages = [{"role": "system", "content": GOLDEN_PROMPT}]
     if req.history:
-        for msg in req.history[-4:]:
-            messages.append({"role": msg.role, "content": msg.content})
+        for msg in req.history[-4:]: messages.append({"role": msg.role, "content": msg.content})
     if req.image_base64:
-        messages.append({"role": "user", "content": [
-            {"type": "text", "text": req.message},
-            {"type": "image_url", "image_url": {"url": req.image_base64}}
-        ]})
+        messages.append({"role": "user", "content": [{"type": "text", "text": req.message}, {"type": "image_url", "image_url": {"url": req.image_base64}}]})
     else:
         messages.append({"role": "user", "content": req.message})
-    response = openrouter_client.chat.completions.create(
-        model="openai/gpt-4o-mini", messages=messages, temperature=0.3, max_tokens=2048,
-    )
+    response = openrouter_client.chat.completions.create(model="openai/gpt-4o-mini", messages=messages, temperature=0.3, max_tokens=2048)
     return (response.choices[0].message.content or "").strip()
 
 def _call_groq(req: ChatRequest) -> str:
     if groq_client is None: raise RuntimeError("GROQ_API_KEY missing")
     messages = [{"role": "system", "content": GOLDEN_PROMPT}]
     if req.history:
-        for msg in req.history[-4:]:
-            messages.append({"role": msg.role, "content": msg.content})
+        for msg in req.history[-4:]: messages.append({"role": msg.role, "content": msg.content})
     if req.image_base64:
         b64_data = req.image_base64.split(",")[-1]
-        messages.append({"role": "user", "content": [
-            {"type": "text", "text": req.message},
-            {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64_data}"}}
-        ]})
+        messages.append({"role": "user", "content": [{"type": "text", "text": req.message}, {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64_data}"}}]})
         model_name = "qwen/qwen3.8-27b"
     else:
         messages.append({"role": "user", "content": req.message})
         model_name = "openai/gpt-oss-120b"
-    completion = groq_client.chat.completions.create(
-        model=model_name, messages=messages, temperature=0.3, max_tokens=2048,
-    )
+    completion = groq_client.chat.completions.create(model=model_name, messages=messages, temperature=0.3, max_tokens=2048)
     return (completion.choices[0].message.content or "").strip()
 
 def _call_gemini(req: ChatRequest) -> str:
@@ -130,20 +112,16 @@ def _call_gemini(req: ChatRequest) -> str:
     model = genai.GenerativeModel(model_name=model_name, system_instruction=GOLDEN_PROMPT)
     contents = []
     if req.history:
-        for msg in req.history[-4:]:
-            role = "user" if msg.role == "user" else "model"
-            contents.append({"role": role, "parts": [msg.content]})
+        for msg in req.history[-4:]: contents.append({"role": "user" if msg.role == "user" else "model", "parts": [msg.content]})
     current_parts = [req.message]
-    if req.image_base64:
-        current_parts.append(_decode_image(req.image_base64))
+    if req.image_base64: current_parts.append(_decode_image(req.image_base64))
     contents.append({"role": "user", "parts": current_parts})
     response = model.generate_content(contents)
     return (response.text or "").strip()
 
 @app.post("/chat", response_model=ChatResponse)
 def chat(req: ChatRequest):
-    if not req.message and not req.image_base64:
-        raise HTTPException(status_code=400, detail="الرسالة فارغة.")
+    if not req.message and not req.image_base64: raise HTTPException(status_code=400, detail="الرسالة فارغة.")
     if OPENROUTER_API_KEY:
         try: return ChatResponse(reply=_call_openrouter(req))
         except Exception as e: logger.warning(f"OpenRouter failed: {e}")
@@ -153,16 +131,13 @@ def chat(req: ChatRequest):
     if GEMINI_API_KEY:
         try: return ChatResponse(reply=_call_gemini(req))
         except Exception as e: logger.error(f"Gemini failed: {e}")
-    raise HTTPException(status_code=502, detail="عذراً، الخوادم مشغولة حالياً.")
+    raise HTTPException(status_code=502, detail="الخوادم مشغولة حالياً.")
 
 @app.get("/")
-def root():
-    return {"app": "OustadDz", "status": "running", "signature": "Powered by Qimah Production"}
+def root(): return {"app": "OustadDz", "status": "running"}
 
 @app.get("/health")
-def health():
-    return {"status": "ok", "gemini": bool(GEMINI_API_KEY), "groq": bool(GROQ_API_KEY)}
+def health(): return {"status": "ok"}
 
 @app.head("/health")
-async def health_head():
-    return {}
+async def health_head(): return {}
