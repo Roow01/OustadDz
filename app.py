@@ -206,3 +206,6 @@ def health():
         "gemini": bool(GEMINI_API_KEY),
         "groq": bool(GROQ_API_KEY)
     }
+@app.head("/health")
+async def health_head():
+    return {}
