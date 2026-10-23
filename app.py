@@ -3,6 +3,8 @@ import io
 import base64
 import json
 import logging
+import urllib.parse
+import xml.etree.ElementTree as ET
 from typing import Optional, List
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -30,7 +32,7 @@ groq_client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
 openrouter_client = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=OPENROUTER_API_KEY) if OPENROUTER_API_KEY else None
 
 # =========================================================
-# قاعدة بيانات الروابط الشاملة (DzExams)
+# قاعدة بيانات الروابط (DzExams) - كاملة
 # =========================================================
 EXAMDZ_SECONDARY_JSON = """
 {
@@ -196,60 +198,75 @@ EXAMDZ_SECONDARY_JSON = """
 """
 EXAMDZ_SECONDARY = json.loads(EXAMDZ_SECONDARY_JSON)
 examdz_text = json.dumps(EXAMDZ_SECONDARY, ensure_ascii=False, indent=2)
-
 curriculum_text = json.dumps(CURRICULUM_DATA, ensure_ascii=False, indent=2)
 
-def _fetch_web_content(url: str) -> str:
-    if not url: return ""
+# =========================================================
+# دالة جلب الأخبار من Google News RSS
+# =========================================================
+def _get_latest_news(query: str = None, limit: int = 5) -> str:
     try:
-        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
-        response = requests.get(url, headers=headers, timeout=10)
+        if query:
+            url = f"https://news.google.com/rss/search?q={urllib.parse.quote(query)}&hl=ar&gl=DZ&ceid=DZ:ar"
+        else:
+            url = "https://news.google.com/rss?hl=ar&gl=DZ&ceid=DZ:ar"
+        
+        response = requests.get(url, timeout=10)
         response.raise_for_status()
-        soup = BeautifulSoup(response.text, 'html.parser')
-        for script in soup(["script", "style"]): script.decompose()
-        text = soup.get_text(separator=' ', strip=True)
-        return text[:4000]
+        
+        root = ET.fromstring(response.content)
+        items = root.findall('.//item')[:limit]
+        
+        news_list = []
+        for item in items:
+            title = item.find('title').text
+            link = item.find('link').text
+            pub_date = item.find('pubDate').text if item.find('pubDate') is not None else ""
+            news_list.append(f"- {title} ({pub_date})\n  {link}")
+        
+        return "\n".join(news_list) if news_list else "لا توجد أخبار حالياً."
     except Exception as e:
-        logger.warning(f"Scraping failed for {url}: {e}")
-        return ""
+        logger.warning(f"News fetch failed: {e}")
+        return "عذراً، لم أتمكن من جلب الأخبار حالياً."
 
 # =========================================================
-# البرومبت الذهبي (مع العناصر النائبة)
+# البرومبت الذهبي (مع فصل المصادر + الأخبار)
 # =========================================================
-GOLDEN_PROMPT_TEMPLATE = """أنت "OustadDz"، نظام ذكاء اصطناعي فائق الذكاء والشمولية (مثل ChatGPT). تتقن جميع اللغات والدارجة الجزائرية. 
+GOLDEN_PROMPT_TEMPLATE = """أنت "OustadDz"، نظام ذكاء اصطناعي فائق الذكاء (مثل ChatGPT). تتقن جميع اللغات والدارجة الجزائرية.
 
 # 🎭 شخصياتك:
-1. **الذكاء العام:** تصرف كأي مساعد ذكي متمكن في الدردشة العامة.
-2. **الخبير التربوي والمدرب:** أستاذ خبير، مرافق بيداغوجي، ومدرب في المنظومة التربوية الجزائرية.
+1. **الذكاء العام:** أجب عن أي سؤال عام بذكاء. إذا سألك المستخدم عن الأخبار، استخدم بيانات الأخبار المرفقة.
+2. **الخبير التربوي:** أستاذ خبير في المنظومة التربوية الجزائرية (2026/2027).
 
-# 🔄 آلية التحول الذكي:
-- **الدردشة العامة:** رحب بالمستخدم بذكاء وأجب عن أسئلته العامة.
-- **دعوة لمرة واحدة:** في نهاية أول رد عام، أضف: "إذا كنت تلميذاً أو أستاذاً وترغب في الخوض في المنهاج أو الدروس، فأنا هنا لخدمتك."
-- **التفعيل والتدقيق:** إذا سأل سؤالاً دراسياً، تحول فوراً إلى "الخبير التربوي". **يُمنع تقديم إجابة تعليمية** إذا لم يذكر (أستاذ أم تلميذ؟ السنة 1،2،3؟ الشعبة؟). يجب أن تطلب هذه المعلومات أولاً.
+# 🔄 آلية التحول:
+- إذا سأل سؤالاً عاماً أو عن أخبار، أجب بذكاء (لا تطلب السنة أو الشعبة).
+- إذا سأل سؤالاً دراسياً، اطلب توضيح (أستاذ أم تلميذ؟ السنة؟ الشعبة؟) قبل الإجابة.
 
-# 🧠 ميزات "الأستاذ المدرب المتطور":
+# 📚 مصادر المعرفة (مهم جداً - لا تخلط بينها):
+1. **المنهاج النظري (CURRICULUM_DATA):** استخدمه لشرح الدروس، المحاور، الأهداف، والتوزيع الفصلي. (هذا هو المصدر النظري).
+2. **دليل الروابط (DzExams):** استخدمه فقط عندما يطلب المستخدم رابطاً (فروض، تمارين، كتب، بكالوريا). لا تعطه رابطاً لم يطلبه.
+3. **الأخبار (News Context):** إذا سأل المستخدم عن الأخبار، استخدم البيانات المرفقة.
+
+# 🧠 ميزات الأستاذ المدرب:
 - **الكشف القبلي:** إذا لم يفهم الطالب، اسأله سؤالاً بسيطاً للتأكد من الأساسيات قبل الشرح.
-- **التدريب (Coach):** دعم نفسي للتلاميذ، واقتراح مواضيع بكالوريا. مساعدة الأساتذة في بناء الفروض وفق الدروس التي أداها.
-- **التمريس التطبيقي:** اطلب من الطالب التطبيق وليس الحفظ.
+- **التدريب (Coach):** دعم نفسي للتلاميذ، واقتراح مواضيع بكالوريا. مساعدة الأساتذة في بناء الفروض.
+
+# 🎯 قواعد صارمة:
+- **لا تخلط** بين المصادر. اذكر المصدر الذي استخدمته (مثلاً: "حسب المنهاج الرسمي...").
+- إذا لم تكن متأكداً، قل: "هذه المعلومة تحتاج تحققاً".
+- أجب في صلب الموضوع، بدون ثرثرة.
+- استخدم لغة المستخدم.
 
 # 📚 المنهاج النظري (CURRICULUM_DATA):
 __CURRICULUM__
 
-# 🔗 دليل الروابط الرسمي (DzExams):
+# 🔗 دليل الروابط (DzExams):
 __EXAMDZ__
 
-# 🧠 محتوى مسحوب من الإنترنت لدعم إجابتك (Context):
+# 🧠 محتوى مسحوب من الإنترنت (Context):
 __CONTEXT__
 
-# 🎯 قواعد تقديم الروابط:
-1. **الافتراضي:** قدم الشرح من (CURRICULUM_DATA). **لا تضع أي رابط** إلا في الحالتين التاليتين.
-2. **طلب صريح:** إذا طلب رابطاً (مثال: "أعطني رابط الفروض")، ابحث في (DzExams) وأعطه الرابط فوراً.
-3. **ضرورة بيداغوجية:** يمكنك اقتراح الرابط بلباقة بعد شرح درس طويل، ولا تضعه إلا إذا وافق المستخدم.
-4. **ممنوع** إعطاء رابط لمادة أو سنة أو شعبة غير التي حددها المستخدم.
-
-# 🎯 قواعد عامة:
-- أجب في صلب الموضوع، بدون ثرثرة.
-- استخدم لغة المستخدم.
+# 📰 الأخبار (News Context):
+__NEWS__
 """
 
 class ChatMessage(BaseModel):
@@ -292,8 +309,14 @@ def chat(req: ChatRequest):
     if not req.message and not req.image_base64:
         raise HTTPException(status_code=400, detail="الرسالة فارغة.")
 
+    # 1. جلب الأخبار إذا طلب المستخدم ذلك
+    news_context = ""
+    news_keywords = ["أخبار", "خبر", "اليوم", "آخر", "news", "actualité", "dernières", "عاجل"]
+    if any(kw in req.message.lower() for kw in news_keywords):
+        news_context = _get_latest_news()
+
+    # 2. جلب المحتوى من الروابط (إذا تم تمرير context_hint)
     context_from_web = ""
-    # استخدام context_hint إذا تم تمريره (اختياري)
     if req.context_hint:
         level = req.context_hint.get("level")
         stream = req.context_hint.get("stream")
@@ -306,10 +329,11 @@ def chat(req: ChatRequest):
             except Exception as e:
                 logger.warning(f"Context fetch error: {e}")
 
-    # استبدال العناصر النائبة بالقيم الفعلية
+    # 3. استبدال العناصر النائبة
     final_prompt = GOLDEN_PROMPT_TEMPLATE.replace("__CURRICULUM__", curriculum_text)
     final_prompt = final_prompt.replace("__EXAMDZ__", examdz_text)
     final_prompt = final_prompt.replace("__CONTEXT__", context_from_web)
+    final_prompt = final_prompt.replace("__NEWS__", news_context)
     
     messages = [{"role": "system", "content": final_prompt}]
     
