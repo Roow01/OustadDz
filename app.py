@@ -30,53 +30,177 @@ groq_client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
 openrouter_client = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=OPENROUTER_API_KEY) if OPENROUTER_API_KEY else None
 
 # =========================================================
-# قاعدة بيانات الروابط (EXAMDZ)
+# قاعدة بيانات الروابط الشاملة (DzExams)
 # =========================================================
-EXAMDZ_SECONDARY = {
-    "1AS": {
-        "sciences": {
-            "math": {"lessons": "https://examdz.com/1as/math/lessons", "tests": "https://examdz.com/1as/math/tests", "bac": None, "books": "https://examdz.com/books/math_1as.pdf"},
-            "physics": {"lessons": "https://examdz.com/1as/physics/lessons", "tests": "https://examdz.com/1as/physics/tests", "bac": None, "books": "https://examdz.com/books/physics_1as.pdf"}
-        }
+EXAMDZ_SECONDARY_JSON = """
+{
+  "السنة الأولى ثانوي": {
+    "جذع مشترك علوم وتكنولوجيا": {
+      "الرياضيات": "https://www.dzexams.com/ar/1as-math",
+      "الفيزياء والتكنولوجيا": "https://www.dzexams.com/ar/1as-pc",
+      "علوم الطبيعة والحياة": "https://www.dzexams.com/ar/1as-snv",
+      "اللغة العربية وآدابها": "https://www.dzexams.com/ar/1as-ar",
+      "اللغة الفرنسية": "https://www.dzexams.com/ar/1as-fr",
+      "اللغة الإنجليزية": "https://www.dzexams.com/ar/1as-en",
+      "التاريخ والجغرافيا": "https://www.dzexams.com/ar/1as-hg",
+      "العلوم الإسلامية": "https://www.dzexams.com/ar/1as-is",
+      "الإعلام الآلي": "https://www.dzexams.com/ar/1as-inf"
     },
-    "2AS": {
-        "sciences": {
-            "math": {"lessons": "https://examdz.com/2as/math/lessons", "tests": "https://examdz.com/2as/math/tests", "bac": "https://examdz.com/2as/math/bac", "books": "https://examdz.com/books/math_2as.pdf"},
-            "physics": {"lessons": "https://examdz.com/2as/physics/lessons", "tests": "https://examdz.com/2as/physics/tests", "bac": "https://examdz.com/2as/physics/bac", "books": "https://examdz.com/books/physics_2as.pdf"}
-        },
-        "lettres": {
-            "arabic": {"lessons": "https://examdz.com/2as/arabic/lessons", "tests": "https://examdz.com/2as/arabic/tests", "bac": "https://examdz.com/2as/arabic/bac", "books": "https://examdz.com/books/arabic_2as.pdf"},
-            "philosophy": {"lessons": "https://examdz.com/2as/philosophy/lessons", "tests": "https://examdz.com/2as/philosophy/tests", "bac": "https://examdz.com/2as/philosophy/bac", "books": "https://examdz.com/books/philosophy_2as.pdf"}
-        }
-    },
-    "3AS": {
-        "sciences": {
-            "math": {"lessons": "https://examdz.com/3as/math/lessons", "tests": "https://examdz.com/3as/math/tests", "bac": "https://examdz.com/3as/math/bac", "books": "https://examdz.com/books/math_3as.pdf"},
-            "physics": {"lessons": "https://examdz.com/3as/physics/lessons", "tests": "https://examdz.com/3as/physics/tests", "bac": "https://examdz.com/3as/physics/bac", "books": "https://examdz.com/books/physics_3as.pdf"},
-            "sciences": {"lessons": "https://examdz.com/3as/sciences/lessons", "tests": "https://examdz.com/3as/sciences/tests", "bac": "https://examdz.com/3as/sciences/bac", "books": "https://examdz.com/books/sciences_3as.pdf"}
-        },
-        "lettres": {
-            "arabic": {"lessons": "https://examdz.com/3as/arabic/lessons", "tests": "https://examdz.com/3as/arabic/tests", "bac": "https://examdz.com/3as/arabic/bac", "books": "https://examdz.com/books/arabic_3as.pdf"},
-            "philosophy": {"lessons": "https://examdz.com/3as/philosophy/lessons", "tests": "https://examdz.com/3as/philosophy/tests", "bac": "https://examdz.com/3as/philosophy/bac", "books": "https://examdz.com/books/philosophy_3as.pdf"}
-        },
-        "gestion": {
-            "economics": {"lessons": "https://examdz.com/3as/economics/lessons", "tests": "https://examdz.com/3as/economics/tests", "bac": "https://examdz.com/3as/economics/bac", "books": "https://examdz.com/books/economics_3as.pdf"},
-            "law": {"lessons": "https://examdz.com/3as/law/lessons", "tests": "https://examdz.com/3as/law/tests", "bac": "https://examdz.com/3as/law/bac", "books": "https://examdz.com/books/law_3as.pdf"}
-        },
-        "langues": {
-            "french": {"lessons": "https://examdz.com/3as/french/lessons", "tests": "https://examdz.com/3as/french/tests", "bac": "https://examdz.com/3as/french/bac", "books": "https://examdz.com/books/french_3as.pdf"},
-            "english": {"lessons": "https://examdz.com/3as/english/lessons", "tests": "https://examdz.com/3as/english/tests", "bac": "https://examdz.com/3as/english/bac", "books": "https://examdz.com/books/english_3as.pdf"},
-            "spanish": {"lessons": "https://examdz.com/3as/spanish/lessons", "tests": "https://examdz.com/3as/spanish/tests", "bac": "https://examdz.com/3as/spanish/bac", "books": "https://examdz.com/books/spanish_3as.pdf"},
-            "german": {"lessons": "https://examdz.com/3as/german/lessons", "tests": "https://examdz.com/3as/german/tests", "bac": "https://examdz.com/3as/german/bac", "books": "https://examdz.com/books/german_3as.pdf"}
-        }
+    "جذع مشترك آداب": {
+      "اللغة العربية وآدابها": "https://www.dzexams.com/ar/1as-ar",
+      "اللغة الفرنسية": "https://www.dzexams.com/ar/1as-fr",
+      "اللغة الإنجليزية": "https://www.dzexams.com/ar/1as-en",
+      "التاريخ والجغرافيا": "https://www.dzexams.com/ar/1as-hg",
+      "العلوم الإسلامية": "https://www.dzexams.com/ar/1as-is",
+      "الرياضيات": "https://www.dzexams.com/ar/1as-math",
+      "علوم الطبيعة والحياة": "https://www.dzexams.com/ar/1as-snv",
+      "الإعلام الآلي": "https://www.dzexams.com/ar/1as-inf"
     }
+  },
+  "السنة الثانية ثانوي": {
+    "علوم تجريبية": {
+      "علوم الطبيعة والحياة": "https://www.dzexams.com/ar/2as-snv",
+      "الفيزياء": "https://www.dzexams.com/ar/2as-pc",
+      "الرياضيات": "https://www.dzexams.com/ar/2as-math",
+      "اللغة العربية وآدابها": "https://www.dzexams.com/ar/2as-ar",
+      "اللغة الفرنسية": "https://www.dzexams.com/ar/2as-fr",
+      "اللغة الإنجليزية": "https://www.dzexams.com/ar/2as-en",
+      "التاريخ والجغرافيا": "https://www.dzexams.com/ar/2as-hg",
+      "العلوم الإسلامية": "https://www.dzexams.com/ar/2as-is",
+      "الفلسفة": "https://www.dzexams.com/ar/2as-ph"
+    },
+    "رياضيات": {
+      "الرياضيات": "https://www.dzexams.com/ar/2as-math",
+      "الفيزياء": "https://www.dzexams.com/ar/2as-pc",
+      "علوم الطبيعة والحياة": "https://www.dzexams.com/ar/2as-snv",
+      "اللغة العربية وآدابها": "https://www.dzexams.com/ar/2as-ar",
+      "اللغة الفرنسية": "https://www.dzexams.com/ar/2as-fr",
+      "اللغة الإنجليزية": "https://www.dzexams.com/ar/2as-en",
+      "التاريخ والجغرافيا": "https://www.dzexams.com/ar/2as-hg",
+      "العلوم الإسلامية": "https://www.dzexams.com/ar/2as-is",
+      "الفلسفة": "https://www.dzexams.com/ar/2as-ph"
+    },
+    "تقني رياضي": {
+      "الهندسة الكهربائية": "https://www.dzexams.com/ar/2as-ge",
+      "الهندسة الميكانيكية": "https://www.dzexams.com/ar/2as-gm",
+      "الهندسة المدنية": "https://www.dzexams.com/ar/2as-gc",
+      "هندسة الطرائق": "https://www.dzexams.com/ar/2as-gp",
+      "الرياضيات": "https://www.dzexams.com/ar/2as-math",
+      "الفيزياء": "https://www.dzexams.com/ar/2as-pc",
+      "اللغة العربية وآدابها": "https://www.dzexams.com/ar/2as-ar",
+      "اللغة الفرنسية": "https://www.dzexams.com/ar/2as-fr",
+      "اللغة الإنجليزية": "https://www.dzexams.com/ar/2as-en",
+      "التاريخ والجغرافيا": "https://www.dzexams.com/ar/2as-hg",
+      "العلوم الإسلامية": "https://www.dzexams.com/ar/2as-is"
+    },
+    "تسيير واقتصاد": {
+      "التسيير المحاسبي والمالي": "https://www.dzexams.com/ar/2as-geb",
+      "الاقتصاد والمناجمنت": "https://www.dzexams.com/ar/2as-eco",
+      "القانون": "https://www.dzexams.com/ar/2as-law",
+      "الرياضيات": "https://www.dzexams.com/ar/2as-math",
+      "اللغة العربية وآدابها": "https://www.dzexams.com/ar/2as-ar",
+      "اللغة الفرنسية": "https://www.dzexams.com/ar/2as-fr",
+      "اللغة الإنجليزية": "https://www.dzexams.com/ar/2as-en",
+      "التاريخ والجغرافيا": "https://www.dzexams.com/ar/2as-hg",
+      "العلوم الإسلامية": "https://www.dzexams.com/ar/2as-is"
+    },
+    "آداب وفلسفة": {
+      "الفلسفة": "https://www.dzexams.com/ar/2as-ph",
+      "اللغة العربية وآدابها": "https://www.dzexams.com/ar/2as-ar",
+      "اللغة الفرنسية": "https://www.dzexams.com/ar/2as-fr",
+      "اللغة الإنجليزية": "https://www.dzexams.com/ar/2as-en",
+      "التاريخ والجغرافيا": "https://www.dzexams.com/ar/2as-hg",
+      "العلوم الإسلامية": "https://www.dzexams.com/ar/2as-is",
+      "الرياضيات": "https://www.dzexams.com/ar/2as-math"
+    },
+    "لغات أجنبية": {
+      "اللغة العربية وآدابها": "https://www.dzexams.com/ar/2as-ar",
+      "اللغة الفرنسية": "https://www.dzexams.com/ar/2as-fr",
+      "اللغة الإنجليزية": "https://www.dzexams.com/ar/2as-en",
+      "اللغة الإسبانية": "https://www.dzexams.com/ar/2as-es",
+      "اللغة الألمانية": "https://www.dzexams.com/ar/2as-de",
+      "اللغة الإيطالية": "https://www.dzexams.com/ar/2as-it",
+      "التاريخ والجغرافيا": "https://www.dzexams.com/ar/2as-hg",
+      "الفلسفة": "https://www.dzexams.com/ar/2as-ph",
+      "الرياضيات": "https://www.dzexams.com/ar/2as-math"
+    }
+  },
+  "السنة الثالثة ثانوي (بكالوريا)": {
+    "علوم تجريبية": {
+      "علوم الطبيعة والحياة": "https://www.dzexams.com/ar/3as-snv",
+      "الفيزياء": "https://www.dzexams.com/ar/3as-pc",
+      "الرياضيات": "https://www.dzexams.com/ar/3as-math",
+      "اللغة العربية وآدابها": "https://www.dzexams.com/ar/3as-ar",
+      "اللغة الفرنسية": "https://www.dzexams.com/ar/3as-fr",
+      "اللغة الإنجليزية": "https://www.dzexams.com/ar/3as-en",
+      "الفلسفة": "https://www.dzexams.com/ar/3as-ph",
+      "التاريخ والجغرافيا": "https://www.dzexams.com/ar/3as-hg",
+      "العلوم الإسلامية": "https://www.dzexams.com/ar/3as-is"
+    },
+    "رياضيات": {
+      "الرياضيات": "https://www.dzexams.com/ar/3as-math",
+      "الفيزياء": "https://www.dzexams.com/ar/3as-pc",
+      "علوم الطبيعة والحياة": "https://www.dzexams.com/ar/3as-snv",
+      "اللغة العربية وآدابها": "https://www.dzexams.com/ar/3as-ar",
+      "اللغة الفرنسية": "https://www.dzexams.com/ar/3as-fr",
+      "اللغة الإنجليزية": "https://www.dzexams.com/ar/3as-en",
+      "الفلسفة": "https://www.dzexams.com/ar/3as-ph",
+      "التاريخ والجغرافيا": "https://www.dzexams.com/ar/3as-hg",
+      "العلوم الإسلامية": "https://www.dzexams.com/ar/3as-is"
+    },
+    "تقني رياضي": {
+      "الهندسة الكهربائية": "https://www.dzexams.com/ar/3as-ge",
+      "الهندسة الميكانيكية": "https://www.dzexams.com/ar/3as-gm",
+      "الهندسة المدنية": "https://www.dzexams.com/ar/3as-gc",
+      "هندسة الطرائق": "https://www.dzexams.com/ar/3as-gp",
+      "الرياضيات": "https://www.dzexams.com/ar/3as-math",
+      "الفيزياء": "https://www.dzexams.com/ar/3as-pc",
+      "اللغة العربية وآدابها": "https://www.dzexams.com/ar/3as-ar",
+      "اللغة الفرنسية": "https://www.dzexams.com/ar/3as-fr",
+      "اللغة الإنجليزية": "https://www.dzexams.com/ar/3as-en",
+      "الفلسفة": "https://www.dzexams.com/ar/3as-ph",
+      "التاريخ والجغرافيا": "https://www.dzexams.com/ar/3as-hg"
+    },
+    "تسيير واقتصاد": {
+      "التسيير المحاسبي والمالي": "https://www.dzexams.com/ar/3as-geb",
+      "الاقتصاد والمالية": "https://www.dzexams.com/ar/3as-eco",
+      "القانون": "https://www.dzexams.com/ar/3as-law",
+      "الرياضيات": "https://www.dzexams.com/ar/3as-math",
+      "اللغة العربية وآدابها": "https://www.dzexams.com/ar/3as-ar",
+      "اللغة الفرنسية": "https://www.dzexams.com/ar/3as-fr",
+      "اللغة الإنجليزية": "https://www.dzexams.com/ar/3as-en",
+      "الفلسفة": "https://www.dzexams.com/ar/3as-ph",
+      "التاريخ والجغرافيا": "https://www.dzexams.com/ar/3as-hg"
+    },
+    "آداب وفلسفة": {
+      "الفلسفة": "https://www.dzexams.com/ar/3as-ph",
+      "اللغة العربية وآدابها": "https://www.dzexams.com/ar/3as-ar",
+      "اللغة الفرنسية": "https://www.dzexams.com/ar/3as-fr",
+      "اللغة الإنجليزية": "https://www.dzexams.com/ar/3as-en",
+      "التاريخ والجغرافيا": "https://www.dzexams.com/ar/3as-hg",
+      "العلوم الإسلامية": "https://www.dzexams.com/ar/3as-is",
+      "الرياضيات": "https://www.dzexams.com/ar/3as-math"
+    },
+    "لغات أجنبية": {
+      "اللغة العربية وآدابها": "https://www.dzexams.com/ar/3as-ar",
+      "اللغة الفرنسية": "https://www.dzexams.com/ar/3as-fr",
+      "اللغة الإنجليزية": "https://www.dzexams.com/ar/3as-en",
+      "اللغة الإسبانية": "https://www.dzexams.com/ar/3as-es",
+      "اللغة الألمانية": "https://www.dzexams.com/ar/3as-de",
+      "اللغة الإيطالية": "https://www.dzexams.com/ar/3as-it",
+      "التاريخ والجغرافيا": "https://www.dzexams.com/ar/3as-hg",
+      "الفلسفة": "https://www.dzexams.com/ar/3as-ph"
+    }
+  }
 }
+"""
+EXAMDZ_SECONDARY = json.loads(EXAMDZ_SECONDARY_JSON)
+examdz_text = json.dumps(EXAMDZ_SECONDARY, ensure_ascii=False, indent=2)
 
 curriculum_text = json.dumps(CURRICULUM_DATA, ensure_ascii=False, indent=2)
 
 def _fetch_web_content(url: str) -> str:
     if not url: return ""
-    if url.endswith('.pdf'): return "(هذا الملف بصيغة PDF، ولا يمكن قراءته آلياً، لذا قدم الرابط للمستخدم لتحميله)."
     try:
         headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
         response = requests.get(url, headers=headers, timeout=10)
@@ -89,42 +213,43 @@ def _fetch_web_content(url: str) -> str:
         logger.warning(f"Scraping failed for {url}: {e}")
         return ""
 
-GOLDEN_PROMPT = f"""أنت "OustadDz"، نظام ذكاء اصطناعي فائق الذكاء والشمولية (مثل ChatGPT). تتقن جميع اللغات (العربية الفصحى، الفرنسية، الإنجليزية، وحتى الدارجة الجزائرية). 
+# =========================================================
+# البرومبت الذهبي (مع العناصر النائبة)
+# =========================================================
+GOLDEN_PROMPT_TEMPLATE = """أنت "OustadDz"، نظام ذكاء اصطناعي فائق الذكاء والشمولية (مثل ChatGPT). تتقن جميع اللغات والدارجة الجزائرية. 
 
-# 🎭 شخصياتك (مرنة):
-1. **الذكاء العام (الافتراضي):** في البداية، أو إذا سألك المستخدم أسئلة عامة (ثقافة، طبخ، تاريخ، دردشة)، تصرف كأي مساعد ذكي متمكن. أجب في صلب الموضوع، بنفس لغته أو لهجته، وبدون أي قيود تعليمية.
-2. **الخبير التربوي والمدرب (عند التفعيل):** أنت أستاذ خبير، مرافق بيداغوجي، ومدرب (Coach) في المنظومة التربوية الجزائرية (2026/2027).
+# 🎭 شخصياتك:
+1. **الذكاء العام:** تصرف كأي مساعد ذكي متمكن في الدردشة العامة.
+2. **الخبير التربوي والمدرب:** أستاذ خبير، مرافق بيداغوجي، ومدرب في المنظومة التربوية الجزائرية.
 
-# 🔄 آلية التحول الذكي (State Machine):
-- **الخطوة 1 (الدردشة العامة):** إذا قال لك المستخدم "أهلاً"، "سلام"، "Bonjour" أو سأل سؤالاً عاماً، رحب به بذكاء وأجب عن سؤاله (لا تطلب منه السنة أو الشعبة الآن).
-- **الخطوة 2 (دعوة لمرة واحدة):** في نهاية أول رد عام لك فقط، أضف جملة قصيرة: "إذا كنت تلميذاً أو أستاذاً وترغب في الخوض في المنهاج أو الدروس، فأنا هنا لخدمتك."
-- **الخطوة 3 (التفعيل والتدقيق):** إذا وافق المستخدم أو سأل سؤالاً دراسياً، تحول فوراً إلى "الخبير التربوي". **يُمنع تقديم إجابة تعليمية** إذا لم يذكر (هل هو أستاذ أم تلميذ؟) و (السنة 1،2،3) و (الشعبة). يجب أن تطلب هذه المعلومات أولاً بذكاء لضمان دقة الإجابة.
-- **الخطوة 4 (الاستمرارية):** إذا كان في وضع الدردشة العامة، لا تكرر سؤاله عن التخصص.
+# 🔄 آلية التحول الذكي:
+- **الدردشة العامة:** رحب بالمستخدم بذكاء وأجب عن أسئلته العامة.
+- **دعوة لمرة واحدة:** في نهاية أول رد عام، أضف: "إذا كنت تلميذاً أو أستاذاً وترغب في الخوض في المنهاج أو الدروس، فأنا هنا لخدمتك."
+- **التفعيل والتدقيق:** إذا سأل سؤالاً دراسياً، تحول فوراً إلى "الخبير التربوي". **يُمنع تقديم إجابة تعليمية** إذا لم يذكر (أستاذ أم تلميذ؟ السنة 1،2،3؟ الشعبة؟). يجب أن تطلب هذه المعلومات أولاً.
 
-# 🧠 ميزات "الأستاذ المدرب المتطور" (عند التفعيل):
-- **الكشف القبلي (Diagnostic):** إذا لاحظت أن الطالب لا يفهم الدرس، لا تعطه الحل مباشرة. اسأله سؤالاً بسيطاً للتأكد من المكتسبات القبلية، ثم اصعد معه بالتدريج.
-- **التدريب والتوجيه (Coach):** 
-  - **إذا كان المستخدم تلميذاً (خاصة البكالوريا):** قدم له دعماً نفسياً إيجابياً لتخفيف التوتر، اقترح عليه مواضيع امتحانات سابقة للتدريب، وصف له خطة مراجعة واقعية.
-  - **إذا كان المستخدم أستاذاً:** ساعده في بناء فروض واختبارات (مواضيع) وفق المعطيات التي يقدمها عن الدروس التي أداها. اقترح عليه أساليب بيداغوجية حديثة.
-- **التمريس التطبيقي:** استخدم أساليب تعليمية حديثة، واطلب من الطالب التطبيق والتجربة، وليس مجرد الحفظ.
+# 🧠 ميزات "الأستاذ المدرب المتطور":
+- **الكشف القبلي:** إذا لم يفهم الطالب، اسأله سؤالاً بسيطاً للتأكد من الأساسيات قبل الشرح.
+- **التدريب (Coach):** دعم نفسي للتلاميذ، واقتراح مواضيع بكالوريا. مساعدة الأساتذة في بناء الفروض وفق الدروس التي أداها.
+- **التمريس التطبيقي:** اطلب من الطالب التطبيق وليس الحفظ.
 
 # 📚 المنهاج النظري (CURRICULUM_DATA):
-{curriculum_text}
+__CURRICULUM__
+
+# 🔗 دليل الروابط الرسمي (DzExams):
+__EXAMDZ__
 
 # 🧠 محتوى مسحوب من الإنترنت لدعم إجابتك (Context):
-{context_from_web}
+__CONTEXT__
 
-# 🎯 قواعد تقديم الروابط (Link Management):
-1. **الافتراضي:** قدم الشرح والإجابة المباشرة من (CURRICULUM_DATA) أو من (Context). **لا تضع أي رابط** إلا في الحالتين التاليتين.
-2. **الاستثناء الأول (طلب صريح):** إذا طلب المستخدم رابطاً صراحةً (مثال: "أعطني رابط الفروض")، استخدم الروابط المتاحة في السياق وأعطه الرابط فوراً.
-3. **الاستثناء الثاني (ضرورة بيداغوجية):** إذا شرحتَ درساً طويلاً ورأيت أن الطالب يحتاج تمارين، يمكنك **اقتراح** الرابط بلباقة. *لا تضع الرابط إلا إذا وافق المستخدم.*
-4. إذا كان الرابط الذي تم سحبه هو PDF، أخبر المستخدم أنك لا تستطيع قراءته آلياً واطلب منه تحميله.
-5. **ممنوع منعاً باتاً** إعطاء رابط لمادة أو سنة أو شعبة غير التي حددها المستخدم.
+# 🎯 قواعد تقديم الروابط:
+1. **الافتراضي:** قدم الشرح من (CURRICULUM_DATA). **لا تضع أي رابط** إلا في الحالتين التاليتين.
+2. **طلب صريح:** إذا طلب رابطاً (مثال: "أعطني رابط الفروض")، ابحث في (DzExams) وأعطه الرابط فوراً.
+3. **ضرورة بيداغوجية:** يمكنك اقتراح الرابط بلباقة بعد شرح درس طويل، ولا تضعه إلا إذا وافق المستخدم.
+4. **ممنوع** إعطاء رابط لمادة أو سنة أو شعبة غير التي حددها المستخدم.
 
 # 🎯 قواعد عامة:
 - أجب في صلب الموضوع، بدون ثرثرة.
-- استخدم لغة المستخدم (حتى الدارجة).
-- اذكر المصطلحات الفرنسية للمواد العلمية.
+- استخدم لغة المستخدم.
 """
 
 class ChatMessage(BaseModel):
@@ -157,8 +282,8 @@ def _call_groq(messages, model_name="openai/gpt-oss-120b") -> str:
     completion = groq_client.chat.completions.create(model=model_name, messages=messages, temperature=0.3, max_tokens=2048)
     return (completion.choices[0].message.content or "").strip()
 
-def _call_gemini(contents) -> str:
-    model = genai.GenerativeModel(model_name="gemini-3.6-flash", system_instruction=GOLDEN_PROMPT)
+def _call_gemini(contents, final_prompt) -> str:
+    model = genai.GenerativeModel(model_name="gemini-3.6-flash", system_instruction=final_prompt)
     response = model.generate_content(contents)
     return (response.text or "").strip()
 
@@ -168,21 +293,24 @@ def chat(req: ChatRequest):
         raise HTTPException(status_code=400, detail="الرسالة فارغة.")
 
     context_from_web = ""
+    # استخدام context_hint إذا تم تمريره (اختياري)
     if req.context_hint:
         level = req.context_hint.get("level")
         stream = req.context_hint.get("stream")
         subject = req.context_hint.get("subject")
-        res_type = req.context_hint.get("resource_type", "lessons")
-        
         if level and stream and subject:
             try:
-                url = EXAMDZ_SECONDARY.get(level, {}).get(stream, {}).get(subject, {}).get(res_type)
+                url = EXAMDZ_SECONDARY.get(level, {}).get(stream, {}).get(subject)
                 if url:
-                    context_from_web = f"\n[محتوى مسحوب من ExamDZ ({res_type}):]\n" + _fetch_web_content(url)
+                    context_from_web = f"\n[محتوى مسحوب من DzExams:]\n" + _fetch_web_content(url)
             except Exception as e:
                 logger.warning(f"Context fetch error: {e}")
 
-    final_prompt = GOLDEN_PROMPT.replace("{context_from_web}", context_from_web)
+    # استبدال العناصر النائبة بالقيم الفعلية
+    final_prompt = GOLDEN_PROMPT_TEMPLATE.replace("__CURRICULUM__", curriculum_text)
+    final_prompt = final_prompt.replace("__EXAMDZ__", examdz_text)
+    final_prompt = final_prompt.replace("__CONTEXT__", context_from_web)
+    
     messages = [{"role": "system", "content": final_prompt}]
     
     if req.history:
@@ -215,7 +343,7 @@ def chat(req: ChatRequest):
                 else: 
                     parts = [{"text": p["text"]} if p["type"]=="text" else _decode_image(p["image_url"]["url"]) for p in m["content"]]
                     contents.append({"role": role, "parts": parts})
-            return ChatResponse(reply=_call_gemini(contents))
+            return ChatResponse(reply=_call_gemini(contents, final_prompt))
         except Exception as e: logger.error(f"Gemini failed: {e}")
 
     raise HTTPException(status_code=502, detail="الخوادم مشغولة حالياً.")
