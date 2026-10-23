@@ -9,7 +9,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from PIL import Image
 
-# استيراد المكتبات الجديدة لقراءة الويب
 import requests
 from bs4 import BeautifulSoup
 
@@ -75,9 +74,6 @@ EXAMDZ_SECONDARY = {
 
 curriculum_text = json.dumps(CURRICULUM_DATA, ensure_ascii=False, indent=2)
 
-# =========================================================
-# دالة سحب المحتوى من الروابط (Web Scraping)
-# =========================================================
 def _fetch_web_content(url: str) -> str:
     if not url: return ""
     if url.endswith('.pdf'): return "(هذا الملف بصيغة PDF، ولا يمكن قراءته آلياً، لذا قدم الرابط للمستخدم لتحميله)."
@@ -93,9 +89,6 @@ def _fetch_web_content(url: str) -> str:
         logger.warning(f"Scraping failed for {url}: {e}")
         return ""
 
-# =========================================================
-# البرومبت الذهبي (شخصية الأستاذ المتطور + الحالة الذكية)
-# =========================================================
 GOLDEN_PROMPT = f"""أنت "OustadDz"، نظام ذكاء اصطناعي فائق الذكاء والشمولية (مثل ChatGPT). تتقن جميع اللغات (العربية الفصحى، الفرنسية، الإنجليزية، وحتى الدارجة الجزائرية). 
 
 # 🎭 شخصياتك (مرنة):
@@ -109,7 +102,7 @@ GOLDEN_PROMPT = f"""أنت "OustadDz"، نظام ذكاء اصطناعي فائ�
 - **الخطوة 4 (الاستمرارية):** إذا كان في وضع الدردشة العامة، لا تكرر سؤاله عن التخصص.
 
 # 🧠 ميزات "الأستاذ المدرب المتطور" (عند التفعيل):
-- **الكشف القبلي (Diagnostic):** إذا لاحظت أن الطالب لا يفهم الدرس، لا تعطه الحل مباشرة. اسأله سؤالاً بسيطاً للتأكد من المكتسبات القبلية (مثال: إذا لم يفهم الاشتقاقية، تأكد أولاً أنه يفهم النهايات)، ثم اصعد معه بالتدريج.
+- **الكشف القبلي (Diagnostic):** إذا لاحظت أن الطالب لا يفهم الدرس، لا تعطه الحل مباشرة. اسأله سؤالاً بسيطاً للتأكد من المكتسبات القبلية، ثم اصعد معه بالتدريج.
 - **التدريب والتوجيه (Coach):** 
   - **إذا كان المستخدم تلميذاً (خاصة البكالوريا):** قدم له دعماً نفسياً إيجابياً لتخفيف التوتر، اقترح عليه مواضيع امتحانات سابقة للتدريب، وصف له خطة مراجعة واقعية.
   - **إذا كان المستخدم أستاذاً:** ساعده في بناء فروض واختبارات (مواضيع) وفق المعطيات التي يقدمها عن الدروس التي أداها. اقترح عليه أساليب بيداغوجية حديثة.
@@ -150,9 +143,6 @@ class ChatResponse(BaseModel):
 app = FastAPI(title="OustadDz API")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=False, allow_methods=["*"], allow_headers=["*"])
 
-# =========================================================
-# دوال المعالجة
-# =========================================================
 def _decode_image(b64: str) -> Image.Image:
     if "," in b64: b64 = b64.split(",", 1)[1]
     raw = base64.b64decode(b64)
@@ -172,9 +162,6 @@ def _call_gemini(contents) -> str:
     response = model.generate_content(contents)
     return (response.text or "").strip()
 
-# =========================================================
-# نقطة النهاية (Endpoint)
-# =========================================================
 @app.post("/chat", response_model=ChatResponse)
 def chat(req: ChatRequest):
     if not req.message and not req.image_base64:
