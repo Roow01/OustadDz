@@ -1,216 +1,279 @@
-# =========================================================
-# قاعدة البيانات الشاملة للطور الثانوي الجزائري (1AS, 2AS, 3AS)
-# =========================================================
+import os
+import io
+import base64
+import json
+import logging
+import urllib.parse
+import xml.etree.ElementTree as ET
+from typing import Optional, List
+from functools import lru_cache
+from urllib.parse import urljoin
 
-CURRICULUM_DATA = {
-    "1AS": {
-        "sciences": {
-            "name": "جذع مشترك علوم وتكنولوجيا",
-            "subjects": {
-                "physics": {
-                    "content": "بنية وهندسة أفراد بعض الأنواع الكيميائية، القوة والحركات، المول والتركيز، الظواهر الضوئية.",
-                    "distribution": ["الوحدة 1: بنية وهندسة أفراد بعض الأنواع الكيميائية", "الوحدة 2: القوة والحركات المستقيمة", "الوحدة 3: القوة والحركات المنحنية", "الوحدة 4: الحركة والقوة والجاذبية", "الوحدة 5: من المجهري إلى العياني (المول والتركيز)", "الوحدة 6: انحفاظ الكتلة خلال تحول كيميائي", "الوحدة 7: الانكسار والضوء الأبيض"]
-                },
-                "math": {
-                    "content": "الأعداد والحساب، الترتيب والمجالات، عموميات على الدوال، الدوال المرجعية، الهندسة المستوية، الحساب المثلثي.",
-                    "distribution": ["المحور 1: الأعداد والحساب", "المحور 2: الترتيب والمجالات والحصر", "المحور 3: عموميات على الدوال", "المحور 4: الدوال المرجعية", "المحور 5: الهندسة المستوية والحساب الشعاعي", "المحور 6: معادلة مستقيم والجمل", "المحور 7: الإحصاء", "المحور 8: الحساب المثلثي والدائرة المثلثية"]
-                },
-                "sciences": {
-                    "content": "استعمال المادة، تحويل الطاقة، إنتاج الكتلة الحيوية، التنسيق العصبي الهرموني.",
-                    "distribution": ["المجال 1: استعمال المادة وتحديد مصدرها", "المجال 2: تحويل الطاقة الكيميائية الكامنة", "المجال 3: دخول الطاقة الضوئية (التركيب الضوئي)", "المجال 4: العوامل المؤثرة على إنتاج الكتلة الحيوية", "المجال 5: التنسيق الوظيفي العصبي الهرموني"]
-                },
-                "arabic": {"content": "اللغة العربية وآدابها (الجاهلي، صدر الإسلام، الأموي).", "distribution": ["الأدب الجاهلي", "صدر الإسلام", "العصر الأموي"]},
-                "french": {"content": "Vulgarisation scientifique, L'interview.", "distribution": ["La vulgarisation scientifique", "L'interview"]},
-                "english": {"content": "Getting Through, Once upon a time.", "distribution": ["Getting Through", "Once upon a time"]},
-                "history": {"content": "التاريخ والجغرافيا: العالم الإسلامي، أدوات الجغرافيا.", "distribution": ["العالم الإسلامي", "أدوات الجغرافيا والبيئات"]},
-                "islamic": {"content": "العلوم الإسلامية: عقيدة التوحيد، القرآن والحديث.", "distribution": ["عقيدة التوحيد", "القرآن والحديث"]}
-            }
-        },
-        "lettres": {
-            "name": "جذع مشترك آداب",
-            "subjects": {
-                "arabic": {"content": "عصر الجاهلية، عصر صدر الإسلام، العصر الأموي.", "distribution": ["العصر الجاهلي (الشعر، المعلقات، النثر)", "عصر صدر الإسلام (أثر العقيدة في الأدب)", "العصر الأموي (شعر السياسة والغزل)"]},
-                "history": {"content": "الخلافة العثمانية، العلاقات الدولية للجزائر، البيئة والنظم البيئية.", "distribution": ["الخلافة العثمانية", "العلاقات الدولية للجزائر", "مفهوم البيئة والنظم البيئية"]},
-                "french": {"content": "Le fait divers, L'interview, La nouvelle réaliste.", "distribution": ["Le fait divers", "L'interview", "La nouvelle réaliste"]},
-                "english": {"content": "Interviews, Fables and tales, Report writing.", "distribution": ["Interviews", "Fables and tales", "Report writing"]},
-                "math": {"content": "الرياضيات الأدبية.", "distribution": ["النسب المئوية والمؤشرات", "العبارات الجبرية والمعادلات", "الإحصاء"]},
-                "sciences": {"content": "علوم الطبيعة والحياة.", "distribution": ["المنعكسات العضلية", "التنظيم العصبي للقلب والتنفس"]},
-                "islamic": {"content": "العلوم الإسلامية.", "distribution": ["الأخلاق والعبادات الإسلامية"]}
-            }
-        }
-    },
-    "2AS": {
-        "sciences": {
-            "name": "شعبة علوم تجريبية",
-            "subjects": {
-                "sciences": {"content": "التنظيم العصبي والهرموني، الانقسام المنصف، بنية ADN، جيولوجيا.", "distribution": ["الوحدة 1: التنظيم العصبي", "الوحدة 2: التنظيم الهرموني", "الوحدة 3: التنسيق العصبي الهرموني", "الوحدة 4: الانقسام المنصف والإلقاح", "الوحدة 5: بنية الـ ADN", "الوحدة 6: الطفرات الوراثية", "الوحدة 7: حركية الصفائح"]},
-                "physics": {"content": "طاقة جملة، العمل والطاقة، الناقلية، كيمياء عضوية، مغناطيسية، عدسات.", "distribution": ["الوحدة 1: طاقة جملة وانحفاظها", "الوحدة 2: العمل والطاقة الحركية", "الوحدة 3: الطاقة الكامنة", "الوحدة 4: الطاقة الداخلية", "الوحدة 5: قياس الناقلية", "الوحدة 6: المعايرة", "الوحدة 7: الكيمياء العضوية", "الوحدة 8: المغناطيسية", "الوحدة 9: العدسات"]},
-                "math": {"content": "عموميات الدوال، كثيرات الحدود، الاشتقاقية، المتتاليات، المرجح، الجداء السلمي، الإحصاء.", "distribution": ["المحور 1: عموميات وتركيب الدوال", "المحور 2: كثيرات الحدود", "المحور 3: الاشتقاقية", "المحور 4: المتتاليات", "المحور 5: المرجح", "المحور 6: الزوايا الموجهة", "المحور 7: الجداء السلمي", "المحور 8: الإحصاء والاحتمالات"]},
-                "arabic": {"content": "الأدب العربي (العصر العباسي).", "distribution": ["الأدب العباسي والتجديد", "شعر الزهد والتصوف"]},
-                "french": {"content": "Le discours exhortatif.", "distribution": ["Le discours exhortatif", "Le plaidoyer"]},
-                "english": {"content": "Make peace, Waste not.", "distribution": ["Make peace", "Waste not, want not"]},
-                "history": {"content": "الاستعمار، الحركة الوطنية، الجزائر إقليميا.", "distribution": ["الاستعمار الحديث", "الحركة الوطنية", "الجزائر إقليميا"]},
-                "islamic": {"content": "حقوق الإنسان، مصادر التشريع.", "distribution": ["حقوق الإنسان", "مصادر التشريع"]},
-                "philosophy": {"content": "المشكلة العلمية والإشكالية.", "distribution": ["مدخل إلى الفلسفة", "المشكلة العلمية والإشكالية"]}
-            }
-        },
-        "math": {
-            "name": "شعبة الرياضيات",
-            "subjects": {
-                "math": {"content": "الاشتقاقية، دراسة الدوال، المتتاليات، الحساب المثلثي، الهندسة الفضائية.", "distribution": ["الاشتقاقية وتطبيقاتها", "دراسة الدوال", "المتتاليات العددية", "الحساب المثلثي", "الهندسة الفضائية والاحتمالات"]},
-                "physics": {"content": "الطاقة، الناقلية، الأحماض والقواعد، المغناطيسية.", "distribution": ["الطاقة الحركية والكامنة", "الناقلية", "الأحماض والقواعد", "الظواهر المغناطيسية"]},
-                "informatics": {"content": "الخوارزميات، البرمجة.", "distribution": ["الخوارزميات", "البرمجة بلغة بايثون", "معالجة البيانات"]}
-            }
-        },
-        "tech": {
-            "name": "تقني رياضي",
-            "subjects": {
-                "math": {"content": "الاشتقاقية، دراسة الدوال، المتتاليات، الحساب المثلثي.", "distribution": ["الاشتقاقية", "دراسة الدوال", "المتتاليات", "الحساب المثلثي"]},
-                "physics": {"content": "الطاقة، الناقلية، الأحماض والقواعد.", "distribution": ["الطاقة", "الناقلية", "الأحماض والقواعد"]},
-                "technology": {"content": "تكنولوجيا التخصص.", "distribution": ["أساسيات التخصص", "التطبيقات", "المشاريع"]}
-            }
-        },
-        "gestion": {
-            "name": "تسيير واقتصاد",
-            "subjects": {
-                "economics": {"content": "المحاسبة، الاقتصاد، التسيير.", "distribution": ["المحاسبة والتسيير المالي", "الاقتصاد والاجتماع", "اللوجستيك"]},
-                "math": {"content": "الدوال، الإحصاء.", "distribution": ["الدوال", "الإحصاء", "المتتاليات"]},
-                "law": {"content": "القانون المدني والتجاري.", "distribution": ["القانون المدني", "القانون التجاري"]}
-            }
-        },
-        "lettres": {
-            "name": "آداب وفلسفة",
-            "subjects": {
-                "philosophy": {"content": "نشأة الفلسفة، السؤال العلمي.", "distribution": ["نشأة الفلسفة", "السؤال العلمي والفلسفي", "الفكر واللغة"]},
-                "arabic": {"content": "الأدب الحديث، المقالة.", "distribution": ["الأدب العربي الحديث", "المقالة", "البلاغة"]},
-                "history": {"content": "الثورة الجزائرية، الحرب العالمية.", "distribution": ["الثورة الجزائرية", "الحرب العالمية الثانية", "النظام الدولي"]}
-            }
-        },
-        "langues": {
-            "name": "لغات أجنبية",
-            "subjects": {
-                "french": {"content": "Textes, grammaire.", "distribution": ["Textes", "Grammaire", "Dissertation"]},
-                "english": {"content": "Texts, grammar, essay.", "distribution": ["Texts", "Grammar", "Essay writing"]},
-                "spanish": {"content": "Textos, gramática.", "distribution": ["Textos", "Gramática", "Conversación"]},
-                "german": {"content": "Texte, Grammatik.", "distribution": ["Texte", "Grammatik", "Konversation"]}
-            }
-        }
-    },
-    "3AS": {
-        "sciences": {
-            "name": "شعبة علوم تجريبية",
-            "subjects": {
-                "physics": {"content": "المتابعة الزمنية، التحولات النووية، الكهرباء، التوازن، الميكانيك، الموجات.", "distribution": ["الوحدة 1: المتابعة الزمنية لتحول كيميائي", "الوحدة 2: دراسة تحولات نووية", "الوحدة 3: دراسة ظواهر كهربائية (RC , RL)", "الوحدة 4: تطور جملة كيميائية نحو حالة التوازن", "الوحدة 5: تطور جملة ميكانيكية", "الوحدة 6: مراقبة تطور جملة كيميائية", "الوحدة 7: التطورات المهتزة", "الوحدة 8: مفهوم الموجة"]},
-                "sciences": {"content": "التخصص الوظيفي للبروتينات، تحويل الطاقة، الجيولوجيا.", "distribution": ["الوحدة 1: آليات تركيب البروتين", "الوحدة 2: العلاقة بين بنية ووظيفة البروتين", "الوحدة 3: النشاط الإنزيمي", "الوحدة 4: الدفاع عن الذات (المناعة)", "الوحدة 5: الاتصال العصبي", "المجال 2: تحويل الطاقة", "المجال 3: التكتونية العامة"]},
-                "math": {"content": "الاستمرارية، الدوال الأسية واللوغاريتمية، المتتاليات، التكامل، الاحتمالات، الأعداد المركبة.", "distribution": ["المحور 1: الاستمرارية والاشتقاقية والنهايات", "المحور 2: الدوال الأسية واللوغاريتمية", "المحور 3: التزايد المقارن", "المحور 4: المتتاليات العددية", "المحور 5: الحساب التكاملي", "المحور 6: الاحتمالات", "المحور 7: الأعداد المركبة", "المحور 8: الهندسة في الفضاء"]},
-                "arabic": {"content": "الانحطاط، النهضة والالتزام.", "distribution": ["شعر المديح", "مدرسة الإحياء", "الشعر السياسي", "النثر الحديث"]},
-                "philosophy": {"content": "المشكلة والإشكالية، فلسفة العلوم.", "distribution": ["المشكلة والإشكالية", "فلسفة العلوم", "العلاقات الإنسانية"]},
-                "french": {"content": "Le texte historique, L'appel.", "distribution": ["Le texte historique", "L'appel", "Le débat d'idées"]},
-                "english": {"content": "Ancient Civilizations, Ethics.", "distribution": ["Ancient Civilizations", "Ethics in Business", "Safety First"]},
-                "history": {"content": "الحرب الباردة، الثورة الجزائرية.", "distribution": ["الحرب الباردة", "الثورة الجزائرية", "القوى الاقتصادية الكبرى"]},
-                "islamic": {"content": "العقل والقرآن، أحكام المال.", "distribution": ["العقل والقرآن", "أحكام المال والميراث", "مصادر التشريع"]}
-            }
-        },
-        "math": {
-            "name": "شعبة الرياضيات",
-            "subjects": {
-                "math": {"content": "النهايات، الاستمرارية، الاشتقاقية، التكامل، الأعداد المركبة، الموافقات.", "distribution": ["النهايات والاستمرارية والاشتقاقية", "التكامل والأعداد المركبة", "الموافقات والاحتمالات"]},
-                "physics": {"content": "المتابعة الزمنية، الكهرباء، الميكانيك.", "distribution": ["المتابعة الزمنية", "الكهرباء (RC, RL)", "الميكانيك"]},
-                "informatics": {"content": "الخوارزميات، البرمجة.", "distribution": ["الخوارزميات", "البرمجة", "المشاريع"]}
-            }
-        },
-        "tech": {
-            "name": "تقني رياضي",
-            "subjects": {
-                "math": {"content": "النهايات، الاشتقاقية، التكامل، الأعداد المركبة.", "distribution": ["النهايات والاشتقاقية", "التكامل والأعداد المركبة", "الموافقات"]},
-                "physics": {"content": "المتابعة الزمنية، الكهرباء، الميكانيك.", "distribution": ["المتابعة الزمنية", "الكهرباء", "الميكانيك"]},
-                "technology": {"content": "تكنولوجيا التخصص.", "distribution": ["أساسيات", "تطبيقات", "مشاريع"]}
-            }
-        },
-        "gestion": {
-            "name": "تسيير واقتصاد",
-            "subjects": {
-                "economics": {"content": "المحاسبة، الاقتصاد الكلي، القانون.", "distribution": ["المحاسبة", "الاقتصاد الكلي", "القانون"]},
-                "math": {"content": "الدوال، الإحصاء، المصفوفات.", "distribution": ["الدوال والمتتاليات", "الإحصاء والمصفوفات", "الاحتمالات"]},
-                "law": {"content": "القانون التجاري والمدني.", "distribution": ["القانون التجاري", "القانون المدني"]}
-            }
-        },
-        "lettres": {
-            "name": "آداب وفلسفة",
-            "subjects": {
-                "philosophy": {"content": "إدراك العالم الخارجي، الأخلاق، فلسفة العلوم.", "distribution": ["إدراك العالم الخارجي", "الأخلاق", "فلسفة العلوم"]},
-                "arabic": {"content": "عصر الضعف، عصر النهضة، المقالة النقدية.", "distribution": ["عصر الضعف", "عصر النهضة", "المقالة النقدية"]},
-                "history": {"content": "الثورة الجزائرية، النظام الدولي.", "distribution": ["الثورة الجزائرية", "النظام الدولي", "القضايا المعاصرة"]}
-            }
-        },
-        "langues": {
-            "name": "لغات أجنبية",
-            "subjects": {
-                "french": {"content": "Textes, dissertation.", "distribution": ["Analyse", "Dissertation", "Commentaire"]},
-                "english": {"content": "Literature, grammar, essay.", "distribution": ["Literature", "Grammar", "Essay"]},
-                "spanish": {"content": "Textos, gramática.", "distribution": ["Textos", "Gramática", "Conversación"]},
-                "german": {"content": "Texte, Grammatik.", "distribution": ["Texte", "Grammatik", "Konversation"]}
-            }
-        }
-    }
-}
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from PIL import Image
+
+import requests
+from bs4 import BeautifulSoup
+import pypdf
+
+import google.generativeai as genai
+from groq import Groq
+from openai import OpenAI
+
+from curriculum_data import CURRICULUM_DATA
+from examdz_data import EXAMDZ_SECONDARY
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("OustadDz")
+
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+GEMINI_API_KEY_2 = os.getenv("GEMINI_API_KEY_2", "")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
+
+groq_client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
+openrouter_client = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=OPENROUTER_API_KEY) if OPENROUTER_API_KEY else None
+
+class ChatMessage(BaseModel):
+    role: str
+    content: str
+class ChatRequest(BaseModel):
+    message: str
+    image_base64: Optional[str] = None
+    history: Optional[List[ChatMessage]] = None
+class ChatResponse(BaseModel):
+    reply: str
 
 # =========================================================
-# استكمال المواد المشتركة لجميع الشعب (عربية، فرنسية، إنجليزية، تاريخ، إسلامية، فلسفة)
+# نظام التعلم الذاتي (Cache) لـ DzExams فقط
 # =========================================================
+KB_FILE = "knowledge_cache.json"
 
-common_2as = {
-    "arabic": {"content": "الأدب العربي الحديث، المقالة.", "distribution": ["الأدب الحديث", "المقالة", "البلاغة"]},
-    "french": {"content": "Textes, grammaire.", "distribution": ["Textes", "Grammaire", "Expression"]},
-    "english": {"content": "Texts, grammar, writing.", "distribution": ["Texts", "Grammar", "Writing"]},
-    "history": {"content": "الثورة الجزائرية، الحرب العالمية.", "distribution": ["الثورة الجزائرية", "الحرب العالمية", "النظام الدولي"]},
-    "islamic": {"content": "القرآن، الحديث، الفقه.", "distribution": ["القرآن", "الحديث", "الفقه"]},
-    "philosophy": {"content": "نشأة الفلسفة، السؤال العلمي.", "distribution": ["نشأة الفلسفة", "السؤال العلمي", "الفكر واللغة"]},
-    "math": {"content": "الدوال، الإحصاء.", "distribution": ["الدوال", "الإحصاء", "المتتاليات"]},
-    "physics": {"content": "الطاقة، الناقلية.", "distribution": ["الطاقة", "الناقلية", "الأحماض"]}
-}
+def load_knowledge():
+    if os.path.exists(KB_FILE):
+        try:
+            with open(KB_FILE, "r", encoding="utf-8") as f: return json.load(f)
+        except: return {}
+    return {}
 
-common_3as = {
-    "arabic": {"content": "الأدب الجزائري، المقالة النقدية.", "distribution": ["الأدب الجزائري", "المقالة النقدية", "المراجعة"]},
-    "french": {"content": "Analyse, dissertation.", "distribution": ["Analyse", "Dissertation", "Commentaire"]},
-    "english": {"content": "Literature, grammar, essay.", "distribution": ["Literature", "Grammar", "Essay"]},
-    "history": {"content": "الثورة الجزائرية، النظام الدولي.", "distribution": ["الثورة الجزائرية", "النظام الدولي", "القضايا المعاصرة"]},
-    "islamic": {"content": "القرآن، الحديث، الفقه.", "distribution": ["القرآن", "الحديث", "الفقه"]},
-    "philosophy": {"content": "المشكلة والإشكالية، فلسفة العلوم.", "distribution": ["المشكلة والإشكالية", "فلسفة العلوم", "العلاقات الإنسانية"]},
-    "math": {"content": "الدوال، الإحصاء.", "distribution": ["الدوال", "الإحصاء", "المصفوفات"]},
-    "physics": {"content": "المتابعة الزمنية، الكهرباء.", "distribution": ["المتابعة الزمنية", "الكهرباء", "الميكانيك"]}
-}
+def save_knowledge(data):
+    try:
+        with open(KB_FILE, "w", encoding="utf-8") as f: json.dump(data, f, ensure_ascii=False)
+    except: pass
 
-# دمج المواد المشتركة في كل شعبة (2AS)
-for stream in ["math", "tech", "gestion", "lettres", "langues"]:
-    if stream in CURRICULUM_DATA["2AS"] and "subjects" in CURRICULUM_DATA["2AS"][stream]:
-        for subj_key, subj_val in common_2as.items():
-            if subj_key not in CURRICULUM_DATA["2AS"][stream]["subjects"]:
-                CURRICULUM_DATA["2AS"][stream]["subjects"][subj_key] = subj_val
+def _get_or_create_summary(url: str, raw_text: str) -> str:
+    kb = load_knowledge()
+    if url in kb: return kb[url] 
+    if not raw_text: return ""
+    try:
+        if GEMINI_API_KEY:
+            genai.configure(api_key=GEMINI_API_KEY)
+            model = genai.GenerativeModel("gemini-2.0-flash")
+            sum_prompt = f"لخص هذا الدرس في نقاط واضحة:\n{raw_text[:3000]}"
+            res = model.generate_content(sum_prompt)
+            summary = res.text
+            kb[url] = summary
+            save_knowledge(kb)
+            return summary
+    except: pass
+    return raw_text[:1500] 
 
-# دمج المواد المشتركة في كل شعبة (3AS)
-for stream in ["math", "tech", "gestion", "lettres", "langues"]:
-    if stream in CURRICULUM_DATA["3AS"] and "subjects" in CURRICULUM_DATA["3AS"][stream]:
-        for subj_key, subj_val in common_3as.items():
-            if subj_key not in CURRICULUM_DATA["3AS"][stream]["subjects"]:
-                CURRICULUM_DATA["3AS"][stream]["subjects"][subj_key] = subj_val
+def _fetch_content(url: str) -> str:
+    if not url: return ""
+    try:
+        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
+        res = requests.get(url, headers=headers, timeout=10)
+        soup = BeautifulSoup(res.text, 'html.parser')
+        pdf_link = None
+        for a_tag in soup.find_all('a', href=True):
+            if a_tag['href'].endswith('.pdf'):
+                pdf_link = urljoin(url, a_tag['href'])
+                break
+        if pdf_link:
+            try:
+                pdf_res = requests.get(pdf_link, headers=headers, timeout=10)
+                reader = pypdf.PdfReader(io.BytesIO(pdf_res.content))
+                extracted = "".join([p.extract_text() for p in reader.pages[:3] if p.extract_text()])
+                if extracted.strip(): return extracted
+            except: pass
+            
+        for script in soup(["script", "style"]): script.decompose()
+        return soup.get_text(separator=' ', strip=True)[:2000]
+    except Exception: return ""
 
-# استكمال مواد شعبة الآداب (التي تنقصها الرياضيات والعلوم)
-if "lettres" in CURRICULUM_DATA["2AS"]:
-    CURRICULUM_DATA["2AS"]["lettres"]["subjects"]["math"] = common_2as["math"]
-    CURRICULUM_DATA["2AS"]["lettres"]["subjects"]["islamic"] = common_2as["islamic"]
-if "lettres" in CURRICULUM_DATA["3AS"]:
-    CURRICULUM_DATA["3AS"]["lettres"]["subjects"]["math"] = common_3as["math"]
-    CURRICULUM_DATA["3AS"]["lettres"]["subjects"]["islamic"] = common_3as["islamic"]
+def _get_latest_news(query: str = None) -> str:
+    try:
+        if query: url = f"https://news.google.com/rss/search?q={urllib.parse.quote(query)}&hl=ar&gl=DZ&ceid=DZ:ar"
+        else: url = "https://news.google.com/rss?hl=ar&gl=DZ&ceid=DZ:ar"
+        res = requests.get(url, timeout=5)
+        root = ET.fromstring(res.content)
+        items = root.findall('.//item')[:3]
+        return "\n".join([f"- {i.find('title').text}" for i in items]) if items else "لا توجد أخبار."
+    except Exception: return "تعذر جلب الأخبار."
 
-# استكمال مواد شعبة اللغات
-if "langues" in CURRICULUM_DATA["2AS"]:
-    CURRICULUM_DATA["2AS"]["langues"]["subjects"]["arabic"] = common_2as["arabic"]
-    CURRICULUM_DATA["2AS"]["langues"]["subjects"]["history"] = common_2as["history"]
-    CURRICULUM_DATA["2AS"]["langues"]["subjects"]["islamic"] = common_2as["islamic"]
-    CURRICULUM_DATA["2AS"]["langues"]["subjects"]["philosophy"] = common_2as["philosophy"]
-if "langues" in CURRICULUM_DATA["3AS"]:
-    CURRICULUM_DATA["3AS"]["langues"]["subjects"]["arabic"] = common_3as["arabic"]
-    CURRICULUM_DATA["3AS"]["langues"]["subjects"]["history"] = common_3as["history"]
-    CURRICULUM_DATA["3AS"]["langues"]["subjects"]["islamic"] = common_3as["islamic"]
-    CURRICULUM_DATA["3AS"]["langues"]["subjects"]["philosophy"] = common_3as["philosophy"]
+def _extract_requested_data(msg: str):
+    msg = msg.lower()
+    year, stream, subject = None, None, None
+    if any(w in msg for w in ["أولى", "اولى", "1as", "1 as", "سنة 1", "1 ثانوي"]): year = "1AS"
+    elif any(w in msg for w in ["ثانية", "2as", "2 as", "سنة 2", "2 ثانوي"]): year = "2AS"
+    elif any(w in msg for w in ["ثالثة", "ثالثه", "3as", "3 as", "سنة 3", "3 ثانوي"]): year = "3AS"
+
+    if year == "1AS":
+        if any(w in msg for w in ["علوم", "science"]): stream = "sciences"
+        elif any(w in msg for w in ["آداب", "اداب", "lettres"]): stream = "lettres"
+    elif year in ["2AS", "3AS"]:
+        if any(w in msg for w in ["علوم", "تجريبية", "science"]): stream = "sciences"
+        elif any(w in msg for w in ["رياضيات", "math"]): stream = "math"
+        elif any(w in msg for w in ["تقني", "tech"]): stream = "tech"
+        elif any(w in msg for w in ["تسيير", "gestion"]): stream = "gestion"
+        elif any(w in msg for w in ["آداب", "اداب", "فلسفة", "lettres"]): stream = "lettres"
+        elif any(w in msg for w in ["لغات", "langues"]): stream = "langues"
+
+    # ملاحظة: تم إضافة أسماء المواد بالعربية لتسهيل التعرف عليها
+    if any(w in msg for w in ["رياضيات", "math"]): subject = "math"
+    elif any(w in msg for w in ["فيزياء", "physique"]): subject = "physics"
+    elif any(w in msg for w in ["علوم طبيعية", "svt"]): subject = "sciences"
+    elif any(w in msg for w in ["عربية", "arabic"]): subject = "arabic"
+    elif any(w in msg for w in ["فرنسية", "french"]): subject = "french"
+    elif any(w in msg for w in ["انجليزية", "english"]): subject = "english"
+    elif any(w in msg for w in ["فلسفة", "philo"]): subject = "philosophy"
+    elif any(w in msg for w in ["تاريخ", "history"]): subject = "history"
+    elif any(w in msg for w in ["اسلامية", "islamic"]): subject = "islamic"
+    elif any(w in msg for w in ["اعلام", "informatique"]): subject = "informatics"
+    elif any(w in msg for w in ["اقتصاد", "eco"]): subject = "eco"
+    elif any(w in msg for w in ["قانون", "law"]): subject = "law"
+
+    return year, stream, subject
+
+def _build_smart_prompt(message: str, history: List[ChatMessage]):
+    base_rules = """أنت "OustadDz" (أستاذ Dz)، مرافق التعليم الثانوي الجزائري.
+⚠️ هويتك: لا تذكر من صممك إلا إذا سُئلت: "تم تطويري بواسطة Qimah Production بإشراف الباحث مانة رضوان".
+⚠️ التنسيق: استخدم Markdown (عناوين، نقاط، جداول) في كل إجاباتك.
+"""
+    msg_lower = message.lower()
+    is_greeting = any(w in msg_lower for w in ["مرحبا", "أهلا", "سلام", "hello", "hi", "bonjour"])
+    is_news = any(w in msg_lower for w in ["أخبار", "خبر", "اليوم", "news"])
+    is_edu = any(w in msg_lower for w in ["درس", "شرح", "تمرين", "حل", "رياضيات", "فيزياء", "علوم", "فلسفة", "لغة", "تاريخ", "math", "physique", "1as", "2as", "3as", "أولى", "ثانية", "ثالثة", "فروض", "اختبارات", "كتاب", "محاور", "خلاصة"])
+
+    context = ""
+    query_type = "general"
+    
+    if is_news: context += f"\n[أخبار اليوم]:\n{_get_latest_news()}\n"
+    
+    if is_edu:
+        query_type = "educational"
+        year, stream, subject = _extract_requested_data(msg_lower)
+        
+        if not (year and stream and subject) and history:
+            for old_msg in reversed(history):
+                if old_msg.role == 'user':
+                    y, s, sub = _extract_requested_data(old_msg.content.lower())
+                    if y: year = y
+                    if s: stream = s
+                    if sub: subject = sub
+                    if year and stream and subject: break
+
+        if year and stream and subject:
+            # 1. البحث في الملف المحلي فقط (المنهاج الرسمي)
+            curr_index = ""
+            if year in CURRICULUM_DATA and stream in CURRICULUM_DATA[year] and "subjects" in CURRICULUM_DATA[year][stream]:
+                if subject in CURRICULUM_DATA[year][stream]["subjects"]:
+                    subj_data = CURRICULUM_DATA[year][stream]["subjects"][subject]
+                    curr_index = json.dumps(subj_data, ensure_ascii=False, separators=(',', ':'))
+
+            # 2. جلب محتوى DzExams (الشرح) فقط
+            examdz_url = ""
+            if year in EXAMDZ_SECONDARY and stream in EXAMDZ_SECONDARY[year]:
+                examdz_url = EXAMDZ_SECONDARY[year][stream].get(subject, "")
+
+            scraped_content = ""
+            if examdz_url:
+                kb = load_knowledge()
+                if examdz_url in kb: scraped_content = kb[examdz_url] 
+                else:
+                    raw = _fetch_content(examdz_url)
+                    scraped_content = _get_or_create_summary(examdz_url, raw)
+
+            context += f"\n[المنهاج الرسمي المحلي (وزارة التربية)]:\n{curr_index}\n"
+            if scraped_content: context += f"\n[محتوى تفصيلي من DzExams]:\n{scraped_content}\n"
+            
+            context += "\n⚠️ تنبيه حاسم: المرجع الأول والأخير لتحديد (ترتيب الدروس والمحاور) هو (المنهاج الرسمي المحلي) المرفق أعلاه. استخدم DzExams فقط لشرح التفاصيل."
+        else:
+            context += "\n[تنبيه]: لم يحدد (السنة والشعبة). اسأله عنها أولاً بذكاء."
+
+    if is_greeting and not is_edu and not is_news:
+         return base_rules + "\nالمستخدم يلقي التحية. رد بترحيب قصير واسأله كيف يمكنك مساعدته.", query_type
+
+    return base_rules + context, query_type
+
+# =========================================================
+# المحركات
+# =========================================================
+app = FastAPI(title="OustadDz API")
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=False, allow_methods=["*"], allow_headers=["*"])
+
+def _decode_image(b64: str) -> Image.Image:
+    if "," in b64: b64 = b64.split(",", 1)[1]
+    return Image.open(io.BytesIO(base64.b64decode(b64))).convert("RGB")
+
+def _call_groq(messages) -> str:
+    res = groq_client.chat.completions.create(model="openai/gpt-oss-120b", messages=messages, temperature=0.3, max_tokens=1024)
+    return (res.choices[0].message.content or "").strip()
+
+def _call_gemini(contents, final_prompt, api_key) -> str:
+    genai.configure(api_key=api_key)
+    model = genai.GenerativeModel(model_name="gemini-2.0-flash", system_instruction=final_prompt)
+    res = model.generate_content(contents)
+    return (res.text or "").strip()
+
+def _call_openrouter(messages) -> str:
+    res = openrouter_client.chat.completions.create(model="nvidia/nemotron-3.5-lightning:free", messages=messages, temperature=0.3, max_tokens=1024)
+    return (res.choices[0].message.content or "").strip()
+
+@app.post("/chat", response_model=ChatResponse)
+def chat(req: ChatRequest):
+    if not req.message and not req.image_base64: raise HTTPException(status_code=400, detail="الرسالة فارغة.")
+    
+    final_prompt, query_type = _build_smart_prompt(req.message, req.history if req.history else [])
+    messages = [{"role": "system", "content": final_prompt}]
+    
+    if req.history:
+        for msg in req.history[-6:]: messages.append({"role": msg.role, "content": msg.content})
+    
+    if req.image_base64:
+        messages.append({"role": "user", "content": [{"type": "text", "text": req.message}, {"type": "image_url", "image_url": {"url": req.image_base64}}]})
+    else: messages.append({"role": "user", "content": req.message})
+
+    gemini_contents = []
+    for m in messages[1:]:
+        if isinstance(m["content"], str): gemini_contents.append({"role": "user", "parts": [m["content"]]})
+        else: 
+            parts = [{"text": p["text"]} if p["type"]=="text" else _decode_image(p["image_url"]["url"]) for p in m["content"]]
+            gemini_contents.append({"role": "user", "parts": parts})
+
+    if GEMINI_API_KEY:
+        try: return ChatResponse(reply=_call_gemini(gemini_contents, final_prompt, GEMINI_API_KEY))
+        except Exception as e: logger.warning(f"Gemini Key 1 failed: {e}")
+
+    if GEMINI_API_KEY_2:
+        try: return ChatResponse(reply=_call_gemini(gemini_contents, final_prompt, GEMINI_API_KEY_2))
+        except Exception as e: logger.warning(f"Gemini Key 2 failed: {e}")
+
+    if GROQ_API_KEY:
+        try: return ChatResponse(reply=_call_groq(messages))
+        except Exception as e: logger.warning(f"Groq failed: {e}")
+        
+    if OPENROUTER_API_KEY:
+        try: return ChatResponse(reply=_call_openrouter(messages))
+        except Exception as e: logger.warning(f"OpenRouter failed: {e}")
+
+    raise HTTPException(status_code=502, detail="عذراً، الخوادم المجانية مشغولة جداً حالياً أو تم استنفاد الحصة اليومية. يرجى المحاولة بعد قليل أو غداً.")
+
+@app.get("/")
+def root(): return {"app": "OustadDz", "status": "running"}
+@app.get("/health")
+def health(): return {"status": "ok"}
+@app.head("/health")
+async def health_head(): return {}
