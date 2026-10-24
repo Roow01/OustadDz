@@ -28,6 +28,7 @@ from examdz_data import EXAMDZ_SECONDARY
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("OustadDz")
 
+# المفاتيح
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 GEMINI_API_KEY_2 = os.getenv("GEMINI_API_KEY_2", "")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
@@ -37,7 +38,7 @@ groq_client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
 openrouter_client = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=OPENROUTER_API_KEY) if OPENROUTER_API_KEY else None
 
 # =========================================================
-# 1. تعريف الكلاسات (تم نقلها للأعلى)
+# 1. تعريف الكلاسات
 # =========================================================
 class ChatMessage(BaseModel):
     role: str
@@ -52,7 +53,7 @@ class ChatResponse(BaseModel):
     reply: str
 
 # =========================================================
-# 2. نظام التعلم الذاتي (Knowledge Cache)
+# 2. نظام التعلم الذاتي
 # =========================================================
 KB_FILE = "knowledge_cache.json"
 
@@ -75,7 +76,6 @@ def _get_or_create_summary(url: str, raw_text: str) -> str:
     try:
         if GEMINI_API_KEY:
             genai.configure(api_key=GEMINI_API_KEY)
-            # استخدام النموذج المستقر
             model = genai.GenerativeModel("gemini-2.0-flash")
             sum_prompt = f"لخص هذا الدرس في نقاط واضحة (بدون نسخ النص الأصلي):\n{raw_text[:3000]}"
             res = model.generate_content(sum_prompt)
@@ -152,9 +152,12 @@ def _extract_requested_data(msg: str):
     return year, stream, subject
 
 def _build_smart_prompt(message: str, history: List[ChatMessage]):
-    base_rules = """أنت "OustadDz" (أستاذ Dz)، مرافق التعليم الثانوي الجزائري.
-⚠️ هويتك: لا تذكر من صممك إلا إذا سُئلت: "تم تطويري بواسطة Qimah Production بإشراف الباحث مانة رضوان".
-⚠️ التزم بترتيب المنهاج الرسمي المرفق.
+    # إضافة قواعد صارمة للتنسيق والشخصية
+    base_rules = """أنت "OustadDz" (أستاذ Dz)، مساعد ذكاء اصطناعي متقدم ومحترف.
+    
+⚠️ **الهوية:** لا تذكر من صممك إلا إذا سُئلت: "تم تطويري بواسطة Qimah Production بإشراف الباحث مانة رضوان".
+⚠️ **الشخصية:** تصرف مثل ChatGPT. كن ودوداً، منظماً، ومباشراً في إجاباتك.
+⚠️ **التنسيق الصارم:** يجب عليك استخدام لغة Markdown في كل إجاباتك (عناوين فرعية ##، قوائم نقطية -، خط عريض **، جداول). لا تكتب فقرات طويلة مملة، بل نظم إجابتك في نقاط واضحة.
 """
     msg_lower = message.lower()
     is_greeting = any(w in msg_lower for w in ["مرحبا", "أهلا", "سلام", "hello", "hi", "bonjour"])
@@ -170,6 +173,7 @@ def _build_smart_prompt(message: str, history: List[ChatMessage]):
         query_type = "educational"
         year, stream, subject = _extract_requested_data(msg_lower)
         
+        # البحث في السجل
         if not (year and stream and subject) and history:
             for old_msg in reversed(history):
                 if old_msg.role == 'user':
@@ -203,7 +207,7 @@ def _build_smart_prompt(message: str, history: List[ChatMessage]):
             if scraped_content:
                 context += f"\n[محتوى تفصيلي مسحوب]:\n{scraped_content}\n"
             
-            context += "\nتنبيه: أجب عن سؤال الطالب بدقة، والتزم حرفياً بالفهرس الرسمي المرفق."
+            context += "\nتنبيه صارم جداً: المرجع الأول والأخير لتحديد (ترتيب الدروس والمحاور) هو (الفهرس الرسمي المعتمد) المرفق أعلاه. يُمنع منعاً باتاً استخدام ترتيب الروابط في الموقع لتحديد الدرس الأول أو الثاني. استخدم المحتوى المسحوب من الموقع فقط لشرح تفاصيل الدرس الذي يطلبه الطالب."
         else:
             context += "\n[تنبيه]: لم يحدد (السنة والشعبة). اسأله عنها أولاً بذكاء."
 
@@ -213,7 +217,7 @@ def _build_smart_prompt(message: str, history: List[ChatMessage]):
     return base_rules + context, query_type
 
 # =========================================================
-# 3. المحركات والنشر (بالنماذج الصحيحة)
+# 3. المحركات والنشر
 # =========================================================
 app = FastAPI(title="OustadDz API")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=False, allow_methods=["*"], allow_headers=["*"])
@@ -223,19 +227,16 @@ def _decode_image(b64: str) -> Image.Image:
     return Image.open(io.BytesIO(base64.b64decode(b64))).convert("RGB")
 
 def _call_groq(messages) -> str:
-    # النموذج الصحيح والمتاح مجاناً على Groq
     res = groq_client.chat.completions.create(model="openai/gpt-oss-120b", messages=messages, temperature=0.3, max_tokens=1024)
     return (res.choices[0].message.content or "").strip()
 
 def _call_gemini(contents, final_prompt, api_key) -> str:
     genai.configure(api_key=api_key)
-    # النموذج الصحيح والمستقر للمفاتيح الجديدة
     model = genai.GenerativeModel(model_name="gemini-2.0-flash", system_instruction=final_prompt)
     res = model.generate_content(contents)
     return (res.text or "").strip()
 
 def _call_openrouter(messages) -> str:
-    # النموذج المجاني الصحيح (أو openrouter/free)
     res = openrouter_client.chat.completions.create(model="nvidia/nemotron-3.5-lightning:free", messages=messages, temperature=0.3, max_tokens=1024)
     return (res.choices[0].message.content or "").strip()
 
@@ -246,8 +247,10 @@ def chat(req: ChatRequest):
     final_prompt, query_type = _build_smart_prompt(req.message, req.history if req.history else [])
     messages = [{"role": "system", "content": final_prompt}]
     
+    # 🔥 السر هنا: إرسال آخر 6 رسائل للذاكرة بدلاً من 1
     if req.history:
-        for msg in req.history[-1:]: messages.append({"role": msg.role, "content": msg.content})
+        for msg in req.history[-6:]: 
+            messages.append({"role": msg.role, "content": msg.content})
     
     if req.image_base64:
         messages.append({"role": "user", "content": [{"type": "text", "text": req.message}, {"type": "image_url", "image_url": {"url": req.image_base64}}]})
