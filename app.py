@@ -22,12 +22,13 @@ import google.generativeai as genai
 from groq import Groq
 from openai import OpenAI
 
+# استدعاء الملفات
+from curriculum_data import CURRICULUM_DATA
 from examdz_data import EXAMDZ_SECONDARY
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("OustadDz")
 
-# إعداد المفاتيح
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
@@ -37,63 +38,46 @@ groq_client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
 openrouter_client = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=OPENROUTER_API_KEY) if OPENROUTER_API_KEY else None
 
 # =========================================================
-# نظام التعلم الذاتي (Knowledge Cache)
+# 1. نظام التعلم الذاتي (Knowledge Cache)
 # =========================================================
 KB_FILE = "knowledge_cache.json"
 
 def load_knowledge():
     if os.path.exists(KB_FILE):
         try:
-            with open(KB_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
+            with open(KB_FILE, "r", encoding="utf-8") as f: return json.load(f)
         except: return {}
     return {}
 
 def save_knowledge(data):
     try:
-        with open(KB_FILE, "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False)
-    except Exception as e:
-        logger.warning(f"Failed to save knowledge: {e}")
+        with open(KB_FILE, "w", encoding="utf-8") as f: json.dump(data, f, ensure_ascii=False)
+    except: pass
 
 def _get_or_create_summary(url: str, raw_text: str) -> str:
     kb = load_knowledge()
-    if url in kb:
-        logger.info(f"Found cached knowledge for {url}")
-        return kb[url]
-    
+    if url in kb: return kb[url] # إذا كان محفوظاً، لا نستهلك شيئاً
     if not raw_text: return ""
     
-    logger.info(f"Creating new summary for {url}...")
     try:
-        # نستخدم Groq لتلخيص سريع (لأنه سريع جداً ورخيص)
-        if groq_client:
-            sum_prompt = f"أنت خبير تربوي جزائري. لخص هذا الدرس في نقاط واضحة ومفيدة للطلاب (بدون نسخ النص الأصلي، بل استخرج الزبدة):\n{raw_text[:5000]}"
-            res = groq_client.chat.completions.create(
-                model="llama-3.1-8b-instant",
-                messages=[{"role": "user", "content": sum_prompt}],
-                temperature=0.3, max_tokens=800
-            )
-            summary = res.choices[0].message.content
-        else:
-            summary = raw_text[:2000] # احتياطي
-            
+        # نستخدم Gemini لتلخيص النص (لأنه يتحمل النصوص الطويلة مجاناً)
+        model = genai.GenerativeModel("gemini-1.5-flash")
+        sum_prompt = f"لخص هذا الدرس في نقاط واضحة (بدون نسخ النص الأصلي):\n{raw_text[:4000]}"
+        res = model.generate_content(sum_prompt)
+        summary = res.text
+        
         kb[url] = summary
         save_knowledge(kb)
         return summary
-    except Exception as e:
-        logger.warning(f"Summarization failed: {e}")
-        return raw_text[:2000]
+    except: return raw_text[:1500] # احتياطي
 
 def _fetch_web_content(url: str) -> str:
     if not url: return ""
     try:
-        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
+        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
         res = requests.get(url, headers=headers, timeout=10)
-        res.raise_for_status()
         soup = BeautifulSoup(res.text, 'html.parser')
         
-        # البحث عن أول ملف PDF
         pdf_link = None
         for a_tag in soup.find_all('a', href=True):
             if a_tag['href'].endswith('.pdf'):
@@ -103,15 +87,13 @@ def _fetch_web_content(url: str) -> str:
         if pdf_link:
             try:
                 pdf_res = requests.get(pdf_link, headers=headers, timeout=15)
-                pdf_file = io.BytesIO(pdf_res.content)
-                reader = pypdf.PdfReader(pdf_file)
+                reader = pypdf.PdfReader(io.BytesIO(pdf_res.content))
                 extracted = "".join([p.extract_text() for p in reader.pages[:5] if p.extract_text()])
                 if extracted.strip(): return extracted
             except: pass
             
-        # إذا لم يجد PDF، يقرأ نصوص الصفحة
         for script in soup(["script", "style"]): script.decompose()
-        return soup.get_text(separator=' ', strip=True)[:4000]
+        return soup.get_text(separator=' ', strip=True)[:3000] # تقليل الحجم
     except Exception: return ""
 
 def _get_latest_news(query: str = None) -> str:
@@ -125,8 +107,21 @@ def _get_latest_news(query: str = None) -> str:
     except Exception: return "تعذر جلب الأخبار."
 
 # =========================================================
-# الرادار الذكي (تحليل الطلب)
+# 2. الفهرس الذكي (توفير الحصة)
 # =========================================================
+def _get_curriculum_index(year: str, stream: str, subject: str) -> str:
+    """يسترجع فقط عناوين الدروس (وليس الشرح الكامل) لتوفير الرموز"""
+    try:
+        subj_data = CURRICULUM_DATA[year][stream]["subjects"][subject]
+        # نأخذ المحتوى والتوزيع فقط، ونتجاهل الأهداف والكتب لتوفير المساحة
+        index_info = {
+            "content": subj_data.get("content", ""),
+            "distribution": subj_data.get("distribution", {})
+        }
+        return json.dumps(index_info, ensure_ascii=False, separators=(',', ':'))
+    except KeyError:
+        return ""
+
 def _extract_requested_data(msg: str):
     msg = msg.lower()
     year, stream, subject = None, None, None
@@ -161,11 +156,12 @@ def _extract_requested_data(msg: str):
     return year, stream, subject
 
 # =========================================================
-# بناء البرومبت
+# 3. بناء البرومبت
 # =========================================================
-def _build_smart_prompt(message: str) -> str:
+def _build_smart_prompt(message: str):
     base_rules = """أنت "OustadDz" (أستاذ Dz)، مرافق التعليم الثانوي الجزائري.
-⚠️ لا تذكر من صممك إلا إذا سُئلت صراحةً: "تم تطويري بواسطة Qimah Production بإشراف الباحث مانة رضوان".
+⚠️ هويتك: لا تذكر من صممك إلا إذا سُئلت: "تم تطويري بواسطة Qimah Production بإشراف الباحث مانة رضوان".
+⚠️ التزم بترتيب المنهاج الرسمي المرفق، ولا تعتمد على ترتيب الروابط.
 تتصرف كذكاء عام للدردشة.
 """
     msg_lower = message.lower()
@@ -174,40 +170,48 @@ def _build_smart_prompt(message: str) -> str:
     is_edu = any(w in msg_lower for w in ["درس", "شرح", "تمرين", "حل", "رياضيات", "فيزياء", "علوم", "فلسفة", "لغة", "تاريخ", "math", "physique", "1as", "2as", "3as", "أولى", "ثانية", "ثالثة", "فروض", "اختبارات", "كتاب"])
 
     context = ""
+    query_type = "general" # نوع الطلب (لتوجيهه للمحرك المناسب)
+    
     if is_news: context += f"\n[أخبار اليوم]:\n{_get_latest_news()}\n"
     
     if is_edu:
+        query_type = "educational" # تعليمي (يحتاج محركاً يتحمل النصوص)
         year, stream, subject = _extract_requested_data(msg_lower)
         if year and stream and subject:
+            # 1. الفهرس الرسمي (صغير جداً)
+            curr_index = _get_curriculum_index(year, stream, subject)
+            
+            # 2. محتوى الرابط (من الكاش أو الموقع)
             url = ""
             if year in EXAMDZ_SECONDARY and stream in EXAMDZ_SECONDARY[year]:
                 url = EXAMDZ_SECONDARY[year][stream].get(subject, "")
             
+            scraped_content = ""
             if url:
-                # نبحث في الذاكرة أولاً
                 kb = load_knowledge()
                 if url in kb:
-                    context += f"\n[من ذاكرة الأستاذ - ملخص الدرس المحفوظ]:\n{kb[url]}\n"
-                    context += "\nتنبيه: لقد قرأت هذا الدرس سابقاً وحفظت ملخصه. اشرحه للطالب بأسلوبك الآن بناءً على هذا الملخص."
+                    scraped_content = kb[url] # من الكاش (بدون استهلاك)
                 else:
-                    # أول مرة: نجلب ونلخص ونحفظ
                     raw_text = _fetch_web_content(url)
-                    summary = _get_or_create_summary(url, raw_text)
-                    context += f"\n[محتوى الدرس (تمت قراءته للتو وحفظه)]:\n{summary}\n"
-                    context += "\nتنبيه: اشرح هذا الدرس للطالب بأسلوبك التربوي، ولا تنسخ النص."
-            else:
-                context += "\n[تنبيه]: هذا الرابط غير متوفر. اعتذر بلطف."
+                    scraped_content = _get_or_create_summary(url, raw_text)
+
+            context += f"\n[الفهرس الرسمي]:\n{curr_index}\n"
+            if scraped_content:
+                context += f"\n[محتوى تفصيلي]:\n{scraped_content}\n"
+            
+            context += "\nتنبيه: أجب عن سؤال الطالب بدقة، والتزم بتسلسل الفهرس الرسمي."
         elif year and stream:
-            context += "\n[تنبيه]: المستخدم حدد السنة والشعبة، لكنه لم يحدد المادة. اسأله عنها."
+            context += "\n[تنبيه]: المستخدم حدد السنة والشعبة، لكنه لم يحدد المادة. اسأله عن المادة."
         else:
             context += "\n[تنبيه]: لم يحدد (السنة والشعبة). اسأله عنها أولاً بذكاء."
 
     if is_greeting and not is_edu and not is_news:
-         return base_rules + "\nالمستخدم يلقي التحية. رد بترحيب قصير واسأله كيف يمكنك مساعدته."
-    return base_rules + context
+         return base_rules + "\nالمستخدم يلقي التحية. رد بترحيب قصير واسأله كيف يمكنك مساعدته.", query_type
+
+    return base_rules + context, query_type
 
 # =========================================================
-# الخادم (FastAPI)
+# 4. استدعاء المحركات
 # =========================================================
 class ChatMessage(BaseModel):
     role: str
@@ -241,10 +245,9 @@ def _call_openrouter(messages) -> str:
 
 @app.post("/chat", response_model=ChatResponse)
 def chat(req: ChatRequest):
-    if not req.message and not req.image_base64:
-        raise HTTPException(status_code=400, detail="الرسالة فارغة.")
-
-    final_prompt = _build_smart_prompt(req.message)
+    if not req.message and not req.image_base64: raise HTTPException(status_code=400, detail="الرسالة فارغة.")
+    
+    final_prompt, query_type = _build_smart_prompt(req.message)
     messages = [{"role": "system", "content": final_prompt}]
     
     if req.history:
@@ -252,13 +255,22 @@ def chat(req: ChatRequest):
     
     if req.image_base64:
         messages.append({"role": "user", "content": [{"type": "text", "text": req.message}, {"type": "image_url", "image_url": {"url": req.image_base64}}]})
-    else:
-        messages.append({"role": "user", "content": req.message})
+    else: messages.append({"role": "user", "content": req.message})
 
-    if OPENROUTER_API_KEY:
-        try: return ChatResponse(reply=_call_openrouter(messages))
-        except Exception as e: logger.warning(f"OpenRouter failed: {e}")
-    
+    # التوجيه الذكي: تعليمي -> Gemini أولاً | عام/أخبار -> Groq أولاً
+    if query_type == "educational":
+        if GEMINI_API_KEY:
+            try: 
+                contents = []
+                for m in messages[1:]:
+                    if isinstance(m["content"], str): contents.append({"role": "user", "parts": [m["content"]]})
+                    else: 
+                        parts = [{"text": p["text"]} if p["type"]=="text" else _decode_image(p["image_url"]["url"]) for p in m["content"]]
+                        contents.append({"role": "user", "parts": parts})
+                return ChatResponse(reply=_call_gemini(contents, final_prompt))
+            except Exception as e: logger.warning(f"Gemini failed: {e}")
+            
+    # إذا لم يكن تعليمياً، أو فشل Gemini:
     if GROQ_API_KEY:
         try: return ChatResponse(reply=_call_groq(messages))
         except Exception as e: logger.warning(f"Groq failed: {e}")
@@ -273,6 +285,10 @@ def chat(req: ChatRequest):
                     contents.append({"role": "user", "parts": parts})
             return ChatResponse(reply=_call_gemini(contents, final_prompt))
         except Exception as e: logger.error(f"Gemini failed: {e}")
+        
+    if OPENROUTER_API_KEY:
+        try: return ChatResponse(reply=_call_openrouter(messages))
+        except Exception as e: logger.warning(f"OpenRouter failed: {e}")
 
     raise HTTPException(status_code=502, detail="عذراً، الحصة المجانية استنفدت لهذا اليوم. يرجى المحاولة غداً.")
 
