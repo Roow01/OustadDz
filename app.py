@@ -37,7 +37,7 @@ groq_client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
 openrouter_client = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=OPENROUTER_API_KEY) if OPENROUTER_API_KEY else None
 
 # =========================================================
-# 1. تعريف الكلاسات (تم نقلها للأعلى لتجنب خطأ NameError)
+# 1. تعريف الكلاسات
 # =========================================================
 class ChatMessage(BaseModel):
     role: str
@@ -74,13 +74,13 @@ def _get_or_create_summary(url: str, raw_text: str) -> str:
     if not raw_text: return ""
     try:
         model = genai.GenerativeModel("gemini-1.5-flash")
-        sum_prompt = f"لخص هذا الدرس في نقاط واضحة (بدون نسخ النص الأصلي):\n{raw_text[:4000]}"
+        sum_prompt = f"لخص هذا الدرس في نقاط واضحة (بدون نسخ النص الأصلي):\n{raw_text[:3000]}"
         res = model.generate_content(sum_prompt)
         summary = res.text
         kb[url] = summary
         save_knowledge(kb)
         return summary
-    except: return raw_text[:1500] 
+    except: return raw_text[:1000] 
 
 def _fetch_web_content(url: str) -> str:
     if not url: return ""
@@ -97,11 +97,11 @@ def _fetch_web_content(url: str) -> str:
             try:
                 pdf_res = requests.get(pdf_link, headers=headers, timeout=15)
                 reader = pypdf.PdfReader(io.BytesIO(pdf_res.content))
-                extracted = "".join([p.extract_text() for p in reader.pages[:5] if p.extract_text()])
+                extracted = "".join([p.extract_text() for p in reader.pages[:3] if p.extract_text()])
                 if extracted.strip(): return extracted
             except: pass
         for script in soup(["script", "style"]): script.decompose()
-        return soup.get_text(separator=' ', strip=True)[:3000]
+        return soup.get_text(separator=' ', strip=True)[:2000]
     except Exception: return ""
 
 def _get_latest_news(query: str = None) -> str:
@@ -114,13 +114,9 @@ def _get_latest_news(query: str = None) -> str:
         return "\n".join([f"- {i.find('title').text}" for i in items]) if items else "لا توجد أخبار."
     except Exception: return "تعذر جلب الأخبار."
 
-# =========================================================
-# 3. استخراج البيانات
-# =========================================================
 def _extract_requested_data(msg: str):
     msg = msg.lower()
     year, stream, subject = None, None, None
-    
     if any(w in msg for w in ["أولى", "اولى", "1as", "1 as", "سنة 1", "1 ثانوي"]): year = "1AS"
     elif any(w in msg for w in ["ثانية", "2as", "2 as", "سنة 2", "2 ثانوي"]): year = "2AS"
     elif any(w in msg for w in ["ثالثة", "ثالثه", "3as", "3 as", "سنة 3", "3 ثانوي"]): year = "3AS"
@@ -151,13 +147,10 @@ def _extract_requested_data(msg: str):
 
     return year, stream, subject
 
-# =========================================================
-# 4. بناء البرومبت
-# =========================================================
 def _build_smart_prompt(message: str, history: List[ChatMessage]):
     base_rules = """أنت "OustadDz" (أستاذ Dz)، مرافق التعليم الثانوي الجزائري.
 ⚠️ هويتك: لا تذكر من صممك إلا إذا سُئلت: "تم تطويري بواسطة Qimah Production بإشراف الباحث مانة رضوان".
-⚠️ التزم بترتيب المنهاج الرسمي المرفق، ولا تعتمد على ترتيب الروابط.
+⚠️ التزم بترتيب المنهاج الرسمي المرفق.
 """
     msg_lower = message.lower()
     is_greeting = any(w in msg_lower for w in ["مرحبا", "أهلا", "سلام", "hello", "hi", "bonjour"])
@@ -173,7 +166,6 @@ def _build_smart_prompt(message: str, history: List[ChatMessage]):
         query_type = "educational"
         year, stream, subject = _extract_requested_data(msg_lower)
         
-        # السياق من الرسائل السابقة إذا لم يحدد
         if not (year and stream and subject) and history:
             for old_msg in reversed(history):
                 if old_msg.role == 'user':
@@ -203,11 +195,11 @@ def _build_smart_prompt(message: str, history: List[ChatMessage]):
                     raw_text = _fetch_web_content(url)
                     scraped_content = _get_or_create_summary(url, raw_text)
 
-            context += f"\n[الفهرس الرسمي المعتمد من الوزارة]:\n{curr_index}\n"
+            context += f"\n[الفهرس الرسمي المعتمد]:\n{curr_index}\n"
             if scraped_content:
                 context += f"\n[محتوى تفصيلي مسحوب]:\n{scraped_content}\n"
             
-            context += "\nتنبيه: أجب عن سؤال الطالب بدقة، والتزم حرفياً بالفهرس الرسمي المرفق (خاصة إذا سأل عن الدرس الأول أو المحاور)."
+            context += "\nتنبيه: أجب عن سؤال الطالب بدقة، والتزم حرفياً بالفهرس الرسمي المرفق."
         else:
             context += "\n[تنبيه]: لم يحدد (السنة والشعبة). اسأله عنها أولاً بذكاء."
 
@@ -217,7 +209,7 @@ def _build_smart_prompt(message: str, history: List[ChatMessage]):
     return base_rules + context, query_type
 
 # =========================================================
-# 5. المحركات والنشر
+# 3. المحركات والنشر
 # =========================================================
 app = FastAPI(title="OustadDz API")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=False, allow_methods=["*"], allow_headers=["*"])
@@ -246,29 +238,15 @@ def chat(req: ChatRequest):
     final_prompt, query_type = _build_smart_prompt(req.message, req.history if req.history else [])
     messages = [{"role": "system", "content": final_prompt}]
     
+    # إرسال آخر رسالة واحدة فقط لتوفير الرموز
     if req.history:
-        for msg in req.history[-2:]: messages.append({"role": msg.role, "content": msg.content})
+        for msg in req.history[-1:]: messages.append({"role": msg.role, "content": msg.content})
     
     if req.image_base64:
         messages.append({"role": "user", "content": [{"type": "text", "text": req.message}, {"type": "image_url", "image_url": {"url": req.image_base64}}]})
     else: messages.append({"role": "user", "content": req.message})
 
-    if query_type == "educational":
-        if GEMINI_API_KEY:
-            try: 
-                contents = []
-                for m in messages[1:]:
-                    if isinstance(m["content"], str): contents.append({"role": "user", "parts": [m["content"]]})
-                    else: 
-                        parts = [{"text": p["text"]} if p["type"]=="text" else _decode_image(p["image_url"]["url"]) for p in m["content"]]
-                        contents.append({"role": "user", "parts": parts})
-                return ChatResponse(reply=_call_gemini(contents, final_prompt))
-            except Exception as e: logger.warning(f"Gemini failed: {e}")
-            
-    if GROQ_API_KEY:
-        try: return ChatResponse(reply=_call_groq(messages))
-        except Exception as e: logger.warning(f"Groq failed: {e}")
-        
+    # 1. المحاولة بـ Gemini أولاً (لأن حصته المجانية ضخمة جداً)
     if GEMINI_API_KEY:
         try: 
             contents = []
@@ -278,13 +256,19 @@ def chat(req: ChatRequest):
                     parts = [{"text": p["text"]} if p["type"]=="text" else _decode_image(p["image_url"]["url"]) for p in m["content"]]
                     contents.append({"role": "user", "parts": parts})
             return ChatResponse(reply=_call_gemini(contents, final_prompt))
-        except Exception as e: logger.error(f"Gemini failed: {e}")
+        except Exception as e: logger.warning(f"Gemini failed: {e}")
+
+    # 2. المحاولة بـ Groq
+    if GROQ_API_KEY:
+        try: return ChatResponse(reply=_call_groq(messages))
+        except Exception as e: logger.warning(f"Groq failed: {e}")
         
+    # 3. المحاولة بـ OpenRouter
     if OPENROUTER_API_KEY:
         try: return ChatResponse(reply=_call_openrouter(messages))
         except Exception as e: logger.warning(f"OpenRouter failed: {e}")
 
-    raise HTTPException(status_code=502, detail="عذراً، الحصة المجانية استنفدت لهذا اليوم. يرجى المحاولة غداً.")
+    raise HTTPException(status_code=502, detail="عذراً، الخوادم المجانية مشغولة جداً حالياً أو تم استنفاد الحصة اليومية. يرجى المحاولة بعد قليل أو غداً.")
 
 @app.get("/")
 def root(): return {"app": "OustadDz", "status": "running"}
