@@ -28,7 +28,6 @@ from examdz_data import EXAMDZ_SECONDARY
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("OustadDz")
 
-# المفاتيح
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 GEMINI_API_KEY_2 = os.getenv("GEMINI_API_KEY_2", "")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
@@ -38,22 +37,20 @@ groq_client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
 openrouter_client = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=OPENROUTER_API_KEY) if OPENROUTER_API_KEY else None
 
 # =========================================================
-# 1. تعريف الكلاسات
+# 1. الكلاسات
 # =========================================================
 class ChatMessage(BaseModel):
     role: str
     content: str
-
 class ChatRequest(BaseModel):
     message: str
     image_base64: Optional[str] = None
     history: Optional[List[ChatMessage]] = None
-
 class ChatResponse(BaseModel):
     reply: str
 
 # =========================================================
-# 2. نظام التعلم الذاتي
+# 2. نظام التعلم الذاتي (Cache)
 # =========================================================
 KB_FILE = "knowledge_cache.json"
 
@@ -69,7 +66,7 @@ def save_knowledge(data):
         with open(KB_FILE, "w", encoding="utf-8") as f: json.dump(data, f, ensure_ascii=False)
     except: pass
 
-def _get_or_create_summary(url: str, raw_text: str) -> str:
+def _get_or_create_summary(url: str, raw_text: str, is_pdf=False) -> str:
     kb = load_knowledge()
     if url in kb: return kb[url] 
     if not raw_text: return ""
@@ -77,20 +74,27 @@ def _get_or_create_summary(url: str, raw_text: str) -> str:
         if GEMINI_API_KEY:
             genai.configure(api_key=GEMINI_API_KEY)
             model = genai.GenerativeModel("gemini-2.0-flash")
-            sum_prompt = f"لخص هذا الدرس في نقاط واضحة (بدون نسخ النص الأصلي):\n{raw_text[:3000]}"
+            sum_prompt = f"لخص هذا الدرس الرسمي في نقاط واضحة:\n{raw_text[:3000]}"
             res = model.generate_content(sum_prompt)
             summary = res.text
             kb[url] = summary
             save_knowledge(kb)
             return summary
     except: pass
-    return raw_text[:1000] 
+    return raw_text[:1500] 
 
-def _fetch_web_content(url: str) -> str:
+# دالة سحب النصوص من الروابط (تدعم PDF والويب)
+def _fetch_content(url: str, is_pdf=False) -> str:
     if not url: return ""
     try:
         headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
-        res = requests.get(url, headers=headers, timeout=10)
+        res = requests.get(url, headers=headers, timeout=15)
+        
+        if is_pdf or url.endswith('.pdf'):
+            reader = pypdf.PdfReader(io.BytesIO(res.content))
+            extracted = "".join([p.extract_text() for p in reader.pages[:5] if p.extract_text()])
+            return extracted[:4000] # أول 5 صفحات كافية للفهرس والتوزيع
+        
         soup = BeautifulSoup(res.text, 'html.parser')
         pdf_link = None
         for a_tag in soup.find_all('a', href=True):
@@ -104,6 +108,7 @@ def _fetch_web_content(url: str) -> str:
                 extracted = "".join([p.extract_text() for p in reader.pages[:3] if p.extract_text()])
                 if extracted.strip(): return extracted
             except: pass
+            
         for script in soup(["script", "style"]): script.decompose()
         return soup.get_text(separator=' ', strip=True)[:2000]
     except Exception: return ""
@@ -152,12 +157,9 @@ def _extract_requested_data(msg: str):
     return year, stream, subject
 
 def _build_smart_prompt(message: str, history: List[ChatMessage]):
-    # إضافة قواعد صارمة للتنسيق والشخصية
-    base_rules = """أنت "OustadDz" (أستاذ Dz)، مساعد ذكاء اصطناعي متقدم ومحترف.
-    
-⚠️ **الهوية:** لا تذكر من صممك إلا إذا سُئلت: "تم تطويري بواسطة Qimah Production بإشراف الباحث مانة رضوان".
-⚠️ **الشخصية:** تصرف مثل ChatGPT. كن ودوداً، منظماً، ومباشراً في إجاباتك.
-⚠️ **التنسيق الصارم:** يجب عليك استخدام لغة Markdown في كل إجاباتك (عناوين فرعية ##، قوائم نقطية -، خط عريض **، جداول). لا تكتب فقرات طويلة مملة، بل نظم إجابتك في نقاط واضحة.
+    base_rules = """أنت "OustadDz" (أستاذ Dz)، مرافق التعليم الثانوي الجزائري.
+⚠️ هويتك: لا تذكر من صممك إلا إذا سُئلت: "تم تطويري بواسطة Qimah Production بإشراف الباحث مانة رضوان".
+⚠️ التنسيق: استخدم Markdown (عناوين، نقاط، جداول) في كل إجاباتك.
 """
     msg_lower = message.lower()
     is_greeting = any(w in msg_lower for w in ["مرحبا", "أهلا", "سلام", "hello", "hi", "bonjour"])
@@ -173,7 +175,6 @@ def _build_smart_prompt(message: str, history: List[ChatMessage]):
         query_type = "educational"
         year, stream, subject = _extract_requested_data(msg_lower)
         
-        # البحث في السجل
         if not (year and stream and subject) and history:
             for old_msg in reversed(history):
                 if old_msg.role == 'user':
@@ -184,30 +185,41 @@ def _build_smart_prompt(message: str, history: List[ChatMessage]):
                     if year and stream and subject: break
 
         if year and stream and subject:
+            # 1. جلب بيانات الوزارة (الترتيب)
+            ministry_url = ""
             curr_index = ""
             if year in CURRICULUM_DATA and stream in CURRICULUM_DATA[year] and "subjects" in CURRICULUM_DATA[year][stream]:
                 if subject in CURRICULUM_DATA[year][stream]["subjects"]:
                     subj_data = CURRICULUM_DATA[year][stream]["subjects"][subject]
-                    index_info = {"content": subj_data.get("content", ""), "distribution": subj_data.get("distribution", {})}
-                    curr_index = json.dumps(index_info, ensure_ascii=False, separators=(',', ':'))
-            
-            url = ""
-            if year in EXAMDZ_SECONDARY and stream in EXAMDZ_SECONDARY[year]:
-                url = EXAMDZ_SECONDARY[year][stream].get(subject, "")
-            
-            scraped_content = ""
-            if url:
-                kb = load_knowledge()
-                if url in kb: scraped_content = kb[url] 
-                else:
-                    raw_text = _fetch_web_content(url)
-                    scraped_content = _get_or_create_summary(url, raw_text)
+                    curr_index = json.dumps({"content": subj_data.get("content", ""), "distribution": subj_data.get("distribution", {})}, ensure_ascii=False, separators=(',', ':'))
+                    ministry_url = subj_data.get("ministry_url", "")
 
-            context += f"\n[الفهرس الرسمي المعتمد]:\n{curr_index}\n"
-            if scraped_content:
-                context += f"\n[محتوى تفصيلي مسحوب]:\n{scraped_content}\n"
+            # 2. جلب محتوى DzExams (الشرح)
+            examdz_url = ""
+            if year in EXAMDZ_SECONDARY and stream in EXAMDZ_SECONDARY[year]:
+                examdz_url = EXAMDZ_SECONDARY[year][stream].get(subject, "")
+
+            ministry_text = ""
+            if ministry_url:
+                kb = load_knowledge()
+                if ministry_url in kb: ministry_text = kb[ministry_url]
+                else:
+                    raw = _fetch_content(ministry_url, is_pdf=True)
+                    ministry_text = _get_or_create_summary(ministry_url, raw, is_pdf=True)
+
+            scraped_content = ""
+            if examdz_url:
+                kb = load_knowledge()
+                if examdz_url in kb: scraped_content = kb[examdz_url] 
+                else:
+                    raw = _fetch_content(examdz_url)
+                    scraped_content = _get_or_create_summary(examdz_url, raw)
+
+            context += f"\n[الفهرس الرسمي (وزارة التربية)]:\n{curr_index}\n"
+            if ministry_text: context += f"\n[النص الرسمي من الوزارة]:\n{ministry_text}\n"
+            if scraped_content: context += f"\n[محتوى تفصيلي من DzExams]:\n{scraped_content}\n"
             
-            context += "\nتنبيه صارم جداً: المرجع الأول والأخير لتحديد (ترتيب الدروس والمحاور) هو (الفهرس الرسمي المعتمد) المرفق أعلاه. يُمنع منعاً باتاً استخدام ترتيب الروابط في الموقع لتحديد الدرس الأول أو الثاني. استخدم المحتوى المسحوب من الموقع فقط لشرح تفاصيل الدرس الذي يطلبه الطالب."
+            context += "\n⚠️ تنبيه حاسم جداً: المرجع الأول والأخير لتحديد (ترتيب الدروس والمحاور) هو (الفهرس الرسمي والنص الرسمي من الوزارة) المرفق أعلاه. لا تعتمد أبداً على ترتيب الروابط في DzExams. استخدم DzExams فقط لشرح التفاصيل."
         else:
             context += "\n[تنبيه]: لم يحدد (السنة والشعبة). اسأله عنها أولاً بذكاء."
 
@@ -247,10 +259,8 @@ def chat(req: ChatRequest):
     final_prompt, query_type = _build_smart_prompt(req.message, req.history if req.history else [])
     messages = [{"role": "system", "content": final_prompt}]
     
-    # 🔥 السر هنا: إرسال آخر 6 رسائل للذاكرة بدلاً من 1
     if req.history:
-        for msg in req.history[-6:]: 
-            messages.append({"role": msg.role, "content": msg.content})
+        for msg in req.history[-6:]: messages.append({"role": msg.role, "content": msg.content})
     
     if req.image_base64:
         messages.append({"role": "user", "content": [{"type": "text", "text": req.message}, {"type": "image_url", "image_url": {"url": req.image_base64}}]})
