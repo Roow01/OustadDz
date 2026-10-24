@@ -1,138 +1,1056 @@
-# curriculum_data.py
-# الموسوعة الرسمية للبرنامج التربوي الجزائري (2026/2027)
-
 CURRICULUM_DATA = {
     "1AS": {
         "sciences": {
             "name": "جذع مشترك علوم وتكنولوجيا",
             "subjects": {
-                "math": {"content": "الأعداد والحساب، الدوال العددية، الدوال المرجعية، الهندسة، الإحصاء.", "distribution": {"term1": "الأعداد والدوال", "term2": "الهندسة", "term3": "الإحصاء"}, "ministry_url": "https://education.gov.dz/wp-content/uploads/2015/04/Programme-Math-1AS.pdf"},
-                "physics": {"content": "مفهوم النوع الكيميائي، القوة والحركات، التحول الكيميائي.", "distribution": {"term1": "النوع الكيميائي", "term2": "الحركات", "term3": "التحول الكيميائي"}, "ministry_url": "https://education.gov.dz/wp-content/uploads/2015/04/Programme-Physique-1AS.pdf"},
-                "sciences": {"content": "التركيب الضوئي، التحويل الطاقوي، التحكم العصبي.", "distribution": {"term1": "التركيب الضوئي", "term2": "التحويل الطاقوي", "term3": "التحكم العصبي"}, "ministry_url": "https://education.gov.dz/wp-content/uploads/2015/04/Programme-SVT-1AS.pdf"},
-                "arabic": {"content": "الأدب الجاهلي والإسلامي، البلاغة، القواعد.", "distribution": {"term1": "الأدب الجاهلي", "term2": "الأدب الإسلامي", "term3": "القواعد"}, "ministry_url": "https://education.gov.dz/wp-content/uploads/2015/04/Programme-Arabe-1AS.pdf"},
-                "french": {"content": "Textes littéraires, grammaire, expression.", "distribution": {"term1": "Textes", "term2": "Grammaire", "term3": "Expression"}, "ministry_url": "https://education.gov.dz/wp-content/uploads/2015/04/Programme-Francais-1AS.pdf"},
-                "english": {"content": "Texts, grammar, conversation.", "distribution": {"term1": "Texts", "term2": "Grammar", "term3": "Writing"}, "ministry_url": "https://education.gov.dz/wp-content/uploads/2015/04/Programme-Anglais-1AS.pdf"},
-                "history": {"content": "العالم الإسلامي، أدوات جغرافية.", "distribution": {"term1": "العالم الإسلامي", "term2": "الأدوات الجغرافية", "term3": "التكتلات"}, "ministry_url": "https://education.gov.dz/wp-content/uploads/2015/04/Programme-Histoire-1AS.pdf"},
-                "islamic": {"content": "القرآن، الحديث، السيرة، الفقه.", "distribution": {"term1": "القرآن", "term2": "الحديث", "term3": "الفقه"}, "ministry_url": "https://education.gov.dz/wp-content/uploads/2015/04/Programme-Islamique-1AS.pdf"}
+                "math": {
+                    "content": "عموميات على الدوال (التغيرات، التمثيل البياني)، الحساب الشعاعي والهندسة التحليلية، الحساب العددي والأعداد والحساب، الهندسة الفضائية، الإحصاء والتكرارات.",
+                    "distribution": [
+                        "الأعداد والحساب والدوال المرجعية (المفهوم للتغير والتمثيل البياني)",
+                        "الحساب الشعاعي ومعادلة مستقيم وتطبيقات الهندسة التحليلية",
+                        "الهندسة الفضائية (المستويات والمستقيمات والأشكال الهندسية)",
+                        "الإحصاء وحساب الفواصل والمؤشرات الإحصائية"
+                    ]
+                },
+                "physics": {
+                    "content": "القوة والحركات المنحنية والمستقيمة، البنية وتطور الكيمياء (المادة وتحولاتها)، الضوء والأطياف الكهرومغناطيسية، النموذج الذري والمقادير المولية.",
+                    "distribution": [
+                        "القوة والحركة المستقيمة والمنحنية (مفهوم عطالة الجسم)",
+                        "من المجهري إلى العياني (كمية المادة والمول والتركيز المولي)",
+                        "تحول كيميائي وحالة الجملة الكيميائية",
+                        "الضوء والرؤية والإنكسار والأطياف الضوئية"
+                    ]
+                },
+                "sciences": {
+                    "content": "آليات النمو والتجديد الخلوي، التركيب الضوئي والتنفس، التنسيق الهرموني واللعصبي، الدعامة الوراثية للنمط الظاهري والنمط الوراثي.",
+                    "distribution": [
+                        "استعمال المادة وتحديد مصدرها (النمو والتجديد الخلوي)",
+                        "تحويل الطاقة الضوئية إلى طاقة كيميائية كامنة (التركيب الضوئي)",
+                        "التنسيق العصبي الهرموني وآليات الاستجابة",
+                        "المعلومة الوراثية وآليات التعبير الجيني والطفور"
+                    ]
+                },
+                "arabic": {
+                    "content": "العصر الجاهلي وصدر الإسلام، النمط الوصفي والسردي والحجاجي، أحكام النحو والصرف (المبتدأ والخبر، الأفعال الخمسة، المجرد والمزيد).",
+                    "distribution": [
+                        "أدب العصر الجاهلي (الشعر الجاهلي والبيئة العربية)",
+                        "أدب صدر الإسلام وتأثير القرآن الكريم والحديث الشريف",
+                        "القواعد النحوية والبلاغية (البلاغة، الصور البيانية، النمط الوصفي والسردي)",
+                        "المطالعة الموجهة والنقد الأدبي"
+                    ]
+                },
+                "french": {
+                    "content": "Texte explicatif / Vulgarisation scientifique. Intention de communication: Donner des informations scientifiques, expliquer des phénomènes naturels. Projet 1: Réaliser un dossier documentaire.",
+                    "distribution": [
+                        "Projet 1: Produire un texte de vulgarisation scientifique (Séquence 1 & 2)",
+                        "Projet 2: Rédiger un compte rendu d'un événement / Récit de voyage",
+                        "Projet 3: Écrire une nouvelle fantastique ou scientifique",
+                        "Techniques d'expression et fiches pédagogiques (Résumé, Synthèse)"
+                    ]
+                },
+                "english": {
+                    "content": "Interpersonal interactions, technology, environment, unit themes: Intercom, Our Findings, Listening and Speaking, Reading and Writing, Grammar (tenses, conditionals, modals).",
+                    "distribution": [
+                        "Unit 1: Getting Through (Computer & Communication)",
+                        "Unit 2: Once Upon a Time (Stories & Literature)",
+                        "Unit 3: Our Findings Tell Us (Polls & Surveys)",
+                        "Unit 4: Back to Nature (Ecology & Environment)"
+                    ]
+                },
+                "history": {
+                    "content": "العالم الإسلامي وضعيته العلاقات والتفاعلات مع الغرب (1453-1914)، التحولات الكبرى في أوروبا (النهضة والثورة الصناعية) وتأثيراتها.",
+                    "distribution": [
+                        "العالم الإسلامي: مجاله الجغرافي والسياسي والتوسعات العثمانية",
+                        "العلاقات بين العالم الإسلامي والغرب واستراتيجية الاستعمار",
+                        "التطورات الاقتصادية والاجتماعية والثقافية في أوروبا",
+                        "الجزائر في العهد العثماني والمؤسسات السياسية والعسكرية"
+                    ]
+                },
+                "islamic": {
+                    "content": "العقيدة الإسلامية وآثارها، التفسير والحديث، الأخلاق والأدب الإسلامي، الفقه (الطهوات والصلاة).",
+                    "distribution": [
+                        "من أركان الإيمان والعقيدة وتأثيرها على السلوك",
+                        "دراسة نصوص قرانية وأحاديث نبوية في الأخلاق والمعاملات",
+                        "من أحكام العبادات في الإسلام (الطهارة والصلاة)",
+                        "السيرة النبوية والمواقف العظيمة في بناء الأمة"
+                    ]
+                },
+                "informatics": {
+                    "content": "تكنولوجيا المعلومات والاتصال، معالجة النصوص، نظام التشغيل، الشبكات وحماية البيانات.",
+                    "distribution": [
+                        "بيئة العمل ومكونات الحاسوب لنظام التشغيل Windows",
+                        "المكتبية: معالج النصوص Microsoft Word والجداول Excel",
+                        "الشبكات المحلية والإنترنت والأمن الرقمي"
+                    ]
+                },
+                "technology": {
+                    "content": "مبادئ الهندسة الكهربائية والميكانيكية والمدنية والتقنيات الأساسية للتمثيل البياني والتصميم.",
+                    "distribution": [
+                        "الهندسة الكهربائية: الدارات الكهربائية والأنظمة الآلية",
+                        "الهندسة الميكانيكية: المخططات والتصميم وتعديل المواد",
+                        "الهندسة المدنية والطرق والمنشآت"
+                    ]
+                }
             }
         },
         "lettres": {
-            "name": "جذع مشترك آداب",
+            "name": "جذع مشترك أدب",
             "subjects": {
-                "arabic": {"content": "الأدب الجاهلي والإسلامي، البلاغة، القواعد.", "distribution": {"term1": "الأدب الجاهلي", "term2": "الأدب الإسلامي", "term3": "التعبير"}, "ministry_url": "https://education.gov.dz/wp-content/uploads/2015/04/Programme-Arabe-1AS.pdf"},
-                "french": {"content": "Textes littéraires, grammaire, expression.", "distribution": {"term1": "Textes", "term2": "Grammaire", "term3": "Expression"}, "ministry_url": "https://education.gov.dz/wp-content/uploads/2015/04/Programme-Francais-1AS.pdf"},
-                "english": {"content": "Texts, grammar, conversation.", "distribution": {"term1": "Texts", "term2": "Grammar", "term3": "Writing"}, "ministry_url": "https://education.gov.dz/wp-content/uploads/2015/04/Programme-Anglais-1AS.pdf"},
-                "islamic": {"content": "القرآن، الحديث، السيرة، الفقه.", "distribution": {"term1": "القرآن", "term2": "الحديث", "term3": "الفقه"}, "ministry_url": "https://education.gov.dz/wp-content/uploads/2015/04/Programme-Islamique-1AS.pdf"},
-                "math": {"content": "الحساب العددي، الدوال، الهندسة.", "distribution": {"term1": "الحساب", "term2": "الدوال", "term3": "الهندسة"}, "ministry_url": "https://education.gov.dz/wp-content/uploads/2015/04/Programme-Math-1AS.pdf"},
-                "physics": {"content": "المحلول المائي، الظواهر الطبيعية.", "distribution": {"term1": "المحلول المائي", "term2": "الهواء", "term3": "الماء"}, "ministry_url": "https://education.gov.dz/wp-content/uploads/2015/04/Programme-Physique-1AS.pdf"},
-                "history": {"content": "العالم الإسلامي، أدوات جغرافية.", "distribution": {"term1": "العالم الإسلامي", "term2": "الأدوات الجغرافية", "term3": "التكتلات"}, "ministry_url": "https://education.gov.dz/wp-content/uploads/2015/04/Programme-Histoire-1AS.pdf"}
+                "arabic": {
+                    "content": "الأدب في الجاهلية وصدر الإسلام، بلاغة القول والأنماط الأدبية (الحجاج، السرد، الوصف)، القواعد والصرف والبحور الشعرية.",
+                    "distribution": [
+                        "شعر الفروسية والحكمة والنثر الجاهلي",
+                        "أثر القرآن والحديث في الشعر والنثر",
+                        "العروض والبلاغة النقدية والأنماط الأدبية",
+                        "النقد الأدبي وتاريخ الأفكار"
+                    ]
+                },
+                "french": {
+                    "content": "Texte explicatif et narratif. Intention de communication: Informer, raconter, décrire. Projet 1: Réaliser un journal de classe. Projet 2: Rédiger une nouvelle.",
+                    "distribution": [
+                        "Projet 1: Réaliser un journal de classe ou un recueil de textes",
+                        "Projet 2: Rédiger une nouvelle réaliste ou fantastique",
+                        "Projet 3: Élaborer une interview ou un reportage",
+                        "Étude des genres littéraires et rédaction autonome"
+                    ]
+                },
+                "english": {
+                    "content": "Communication, intercultural issues, creative writing, reading comprehension, grammar structures (relative clauses, reported speech).",
+                    "distribution": [
+                        "Unit 1: Intercom (Communication and Social Networking)",
+                        "Unit 2: Once Upon a Time (Folk tales & Narrative texts)",
+                        "Unit 3: Back to Nature (Environmental issues)",
+                        "Unit 4: Health and Lifestyle"
+                    ]
+                },
+                "history": {
+                    "content": "العالم الإسلامي والتحولات الأوروبية، الخلافة العثمانية والعلاقات الدولية، تاريخ الجزائر الحديث.",
+                    "distribution": [
+                        "العالم الإسلامي والعلاقات الدولية",
+                        "النهضة الأوروبية واكتشافات الجغرافيا",
+                        "تاريخ الجزائر في العهد العثماني",
+                        "الحركات الاستعمارية وردود الفعل الوطنية"
+                    ]
+                },
+                "islamic": {
+                    "content": "العقيدة، تفسير القرآن، الأحاديث النبوية، الفقه والسيرة.",
+                    "distribution": [
+                        "مدخل إلى العقيدة الإسلامية وأثرها",
+                        "دراسة تحليليّة لنصوص قرآنية وحديثية",
+                        "أحكام العبادات في الشريعة الإسلامية",
+                        "محطات من السيرة النبوية العطرة"
+                    ]
+                },
+                "math": {
+                    "content": "الإحصاء والتكرارات، الدوال الجبرية البسيطة، الحساب العددي، النسب المئوية.",
+                    "distribution": [
+                        "الحساب العددي والنسب المئوية",
+                        "مفهوم الدالة والتغيرات والتمثيل البياني",
+                        "الإحصاء والتنظيم العددي للبيانات"
+                    ]
+                },
+                "informatics": {
+                    "content": "أساسيات الحاسوب ومعالجة النصوص والبحث العلمي الرقمي.",
+                    "distribution": [
+                        "نظام التشغيل وإدارة الملفات",
+                        "معالج النصوص والتنسيق المتقدم",
+                        "استخدام أدوات البحث والإنترنت"
+                    ]
+                }
             }
         }
     },
     "2AS": {
         "sciences": {
-            "name": "علوم تجريبية",
+            "name": "شعبة علوم تجريبية",
             "subjects": {
-                "math": {"content": "الاشتقاقية، الدوال، المتتاليات، الحساب المثلثي، الاحتمالات.", "distribution": {"term1": "الاشتقاقية", "term2": "المتتاليات", "term3": "الاحتمالات"}, "ministry_url": "https://education.gov.dz/wp-content/uploads/2015/04/Programme-Math-2AS.pdf"},
-                "physics": {"content": "الطاقة، الناقلية، الأحماض والقواعد.", "distribution": {"term1": "الطاقة", "term2": "الناقلية", "term3": "الأحماض"}, "ministry_url": "https://education.gov.dz/wp-content/uploads/2015/04/Programme-Physique-2AS.pdf"},
-                "sciences": {"content": "التغذية، المناعة، الوراثة.", "distribution": {"term1": "التغذية", "term2": "المناعة", "term3": "الوراثة"}, "ministry_url": "https://education.gov.dz/wp-content/uploads/2015/04/Programme-SVT-2AS.pdf"},
-                "arabic": {"content": "الأدب الحديث، البلاغة، القواعد.", "distribution": {"term1": "الأدب الحديث", "term2": "البلاغة", "term3": "التعبير"}, "ministry_url": "https://education.gov.dz/wp-content/uploads/2015/04/Programme-Arabe-2AS.pdf"},
-                "history": {"content": "الثورة الجزائرية، الحرب العالمية الثانية.", "distribution": {"term1": "الثورة", "term2": "الحرب العالمية", "term3": "النظام الدولي"}, "ministry_url": "https://education.gov.dz/wp-content/uploads/2015/04/Programme-Histoire-2AS.pdf"},
-                "philosophy": {"content": "نشأة الفلسفة، السؤال العلمي.", "distribution": {"term1": "نشأة الفلسفة", "term2": "الفكر واللغة", "term3": "الملاحظة"}, "ministry_url": "https://education.gov.dz/wp-content/uploads/2015/04/Programme-Philosophie-2AS.pdf"}
+                "math": {
+                    "content": "الدوال العددية (الاشتقاقية، التزايد والتناقص)، المتتاليات العددية، الزوايا الموجهة وحساب المثلثات، الهندسة الفضائية، الأحتمالات.",
+                    "distribution": [
+                        "عموميات على الدوال والاشتقاقية وتطبيقاتها",
+                        "المتتاليات العددية (الحسابية والهندسية)",
+                        "الزوايا الموجهة وحساب المثلثات والهندسة التحليلية",
+                        "الإحصاء والاحتمالات الشجرية"
+                    ]
+                },
+                "physics": {
+                    "content": "الطاقة الحركية والحرة والداخلية، الناقلية الكهربائية، الأحماض والقواعد، التفاعلات الأكسدة والإرجاع، المغناطيسية والديناميكا.",
+                    "distribution": [
+                        "الطاقة وانحفاظها (الميكانيكية والحرارية والداخلية)",
+                        "قياس الناقلية والمعايرة عن طريق الناقلية",
+                        "الكيمياء المائية: أكسدة-إرجاع واحماض-أسس",
+                        "المغناطيسية والظواهر الكهرومغناطيسية"
+                    ]
+                },
+                "sciences": {
+                    "content": "المنظمات العصبية، التنظيم الهرموني والسكري، التنظيم المناعي، الخلية والمادة الوراثية، الجيولوجيا وتكتونية الصفائح.",
+                    "distribution": [
+                        "التنظيم العصبي والتنظيم الهرموني (تحاليل نسبة السكر في الدم)",
+                        "النمط الظاهري والوراثي والطفرات الوراثية",
+                        "المنعكس العضلي والسيالة العصبية",
+                        "الجيولوجيا: تكتونية الصفائح والبنية الداخلية للأرض"
+                    ]
+                },
+                "arabic": {
+                    "content": "الأدب في العصر العباسي (الازدهار، الحركة النقدية، الزهد والمجون)، القواعد، العروض والبلاغة النقدية.",
+                    "distribution": [
+                        "شعر الطبيعة والوصف في العصر العباسي",
+                        "حركة التجديد في الشعر العباسي (أبو تمام، أبو نواس)",
+                        "النثر العلمي والأدبي (الجاحظ وابن المقفع)",
+                        "البلاغة والقواعد النحوية وقضايا العروض"
+                    ]
+                },
+                "french": {
+                    "content": "Le discours argumentatif (Plaidoyer et réquisitoire) & Le texte d'exhortation / L'appel. Intention: Convaincre, persuader, inciter à l'action.",
+                    "distribution": [
+                        "Projet 1: Le discours d'exhortation / L'appel à l'action",
+                        "Projet 2: Le débat d'idées et le discours argumentatif",
+                        "Projet 3: Le reportage touristique et le fait divers",
+                        "Techniques d'expression: La fiche de lecture, le compte rendu critique"
+                    ]
+                },
+                "english": {
+                    "content": "Education in the world, disaster management, business and safety, science and technology, conditionals, passive voice, reporting verbs.",
+                    "distribution": [
+                        "Unit 1: Make Peace (Conflict resolution & Peacebuilding)",
+                        "Unit 2: Waste Not, Want Not (Ecology & Sustainable development)",
+                        "Unit 3: Budding Scientist (Scientific breakthroughs & Inventions)",
+                        "Unit 4: Business is Business (Trade and Economics)"
+                    ]
+                },
+                "history": {
+                    "content": "الاستعمار الحديث في إفريقيا وآسيا، الحركة الوطنية الجزائرية وتطورها من 1830 إلى 1954، العالم بين الحربين العالميّتين.",
+                    "distribution": [
+                        "الحركة الاستعمارية في إفريقيا وآسيا وأسبابها",
+                        "الاستعمار الفرنسي في الجزائر والمقاومة الشعبية والحركة الوطنية",
+                        "العلاقات الدولية بين الحربين العالمية الأولى والثانية",
+                        "الثورات التحررية وتفكك الأجهزة الاستعمارية"
+                    ]
+                },
+                "islamic": {
+                    "content": "مصادر التشريع الإسلامي، الربا والمعاملات المالية، الأخلاق الاجتماعية، التكافل الاجتماعي في الشريعة.",
+                    "distribution": [
+                        "القرآن والسنة كمصدرين أساسيين للتشريع",
+                        "أحكام المعاملات المالية والجنائية في الإسلام",
+                        "من قيم التواصل والتكافل الاجتماعي",
+                        "المسؤولية الفردية والجماعية في المجتمع"
+                    ]
+                },
+                "philosophy": {
+                    "content": "مدخل إلى الفلسفة، السؤال الفلسفي والمشكلة العلمية، المنطق الصوري والرياضي، نطاق المعرفة الإنسانية.",
+                    "distribution": [
+                        "المشكلة والأشكالية / المشكلة العلمية والسؤال الفلسفي",
+                        "المنطق الصوري الأرسطي والمنطق الرياضي الحديث",
+                        "إشكالية الفكر والسوق واللغة",
+                        "فلسفة العلوم والمعرفة"
+                    ]
+                }
             }
         },
         "math": {
-            "name": "شعبة الرياضيات",
+            "name": "شعبة رياضيات",
             "subjects": {
-                "math": {"content": "الجبر، التحليل، الهندسة، الاحتمالات.", "distribution": {"term1": "الجبر", "term2": "التحليل", "term3": "الهندسة"}, "ministry_url": "https://education.gov.dz/wp-content/uploads/2015/04/Programme-Math-2AS.pdf"},
-                "physics": {"content": "الميكانيك، الكهرباء.", "distribution": {"term1": "الميكانيك", "term2": "الكهرباء", "term3": "مراجعة"}, "ministry_url": "https://education.gov.dz/wp-content/uploads/2015/04/Programme-Physique-2AS.pdf"},
-                "informatics": {"content": "الخوارزميات، البرمجة.", "distribution": {"term1": "الخوارزميات", "term2": "البرمجة", "term3": "مشاريع"}, "ministry_url": "https://education.gov.dz/wp-content/uploads/2015/04/Programme-Informatique-2AS.pdf"}
+                "math": {
+                    "content": "الدوال العددية والمعادلات التفاضلية، الأشعة في الفضاء والأعداد المركبة، المتتاليات، التحويلات النقطية، الإحصاء والاحتمالات.",
+                    "distribution": [
+                        "العموميات على الدوال والاشتقاقية والاستمرارية",
+                        "المتتاليات العددية والبرهان بالتراجع",
+                        "الهندسة الفضائية والتحويلات النقطية",
+                        "الحساب والاحتمالات والأعداد المركبة"
+                    ]
+                },
+                "physics": {
+                    "content": "الظواهر الكهربائية، الطاقة وانحفاظها، الحركة الكيميائية والتعادل، المغناطيسية والتحريض الكهرومغناطيسي.",
+                    "distribution": [
+                        "مقاربة طاقوية وااشتغال الجمل",
+                        "الكهرباء والناقلية والمعايرة",
+                        "الكيمياء المائية والحركية",
+                        "الكهرومغناطيسية والتحريض"
+                    ]
+                },
+                "sciences": {
+                    "content": "التنظيم العصبي والتنظيم الهرموني والوراثة والجيولوجيا التكتونية.",
+                    "distribution": [
+                        "الآليات العصبية والهرمونية",
+                        "التعبير الجيني والوراثة",
+                        "الجيولوجيا والبنية الداخلية للكرة الأرضية"
+                    ]
+                },
+                "arabic": {
+                    "content": "الأدب العباسي والبلاغة والنقد والقواعد الصرفية والنحوية.",
+                    "distribution": [
+                        "الشعر ونقده في العصر العباسي",
+                        "النثر الأدبي والعلمي",
+                        "القواعد والبلاغة والعروض"
+                    ]
+                },
+                "french": {
+                    "content": "Le discours argumentatif, l'appel et le texte d'opinion.",
+                    "distribution": [
+                        "Le débat d'idées",
+                        "Le texte d'exhortation / L'appel",
+                        "Le reportage et le compte rendu"
+                    ]
+                },
+                "english": {
+                    "content": "Peacebuilding, technology, environment, grammar focus.",
+                    "distribution": [
+                        "Unit 1: Make Peace",
+                        "Unit 2: Waste Not, Want Not",
+                        "Unit 3: Budding Scientist"
+                    ]
+                },
+                "history": {
+                    "content": "الحركة الاستعمارية والحركة الوطنية الجزائرية بين 1830 و1954.",
+                    "distribution": [
+                        "الاستعمار والمقاومة",
+                        "العلاقات الدولية بين الحربين"
+                    ]
+                },
+                "islamic": {
+                    "content": "العقيدة، المعاملات، الأخلاق والتشريع الإسلامي.",
+                    "distribution": [
+                        "مصادر التشريع والمعاملات المالية"
+                    ]
+                },
+                "philosophy": {
+                    "content": "المشكلة والشكالية الفلسفية، المنطق، فلسفة العلوم.",
+                    "distribution": [
+                        "السؤال الفلسفي والمنطق والفلسفة المفهومية"
+                    ]
+                }
             }
         },
         "tech": {
-            "name": "تقني رياضي",
+            "name": "شعبة تقني رياضي",
             "subjects": {
-                "math": {"content": "الجبر، التحليل، الهندسة.", "distribution": {"term1": "الجبر", "term2": "التحليل", "term3": "الهندسة"}, "ministry_url": "https://education.gov.dz/wp-content/uploads/2015/04/Programme-Math-2AS.pdf"},
-                "physics": {"content": "الميكانيك، الكهرباء.", "distribution": {"term1": "الميكانيك", "term2": "الكهرباء", "term3": "مراجعة"}, "ministry_url": "https://education.gov.dz/wp-content/uploads/2015/04/Programme-Physique-2AS.pdf"}
-            }
-        },
-        "lettres": {
-            "name": "آداب وفلسفة",
-            "subjects": {
-                "philosophy": {"content": "نشأة الفلسفة، السؤال العلمي.", "distribution": {"term1": "نشأة الفلسفة", "term2": "الفكر واللغة", "term3": "الملاحظة"}, "ministry_url": "https://education.gov.dz/wp-content/uploads/2015/04/Programme-Philosophie-2AS.pdf"},
-                "arabic": {"content": "الأدب الحديث، البلاغة، القواعد.", "distribution": {"term1": "الأدب الحديث", "term2": "البلاغة", "term3": "التعبير"}, "ministry_url": "https://education.gov.dz/wp-content/uploads/2015/04/Programme-Arabe-2AS.pdf"},
-                "history": {"content": "الثورة الجزائرية، الحرب العالمية الثانية.", "distribution": {"term1": "الثورة", "term2": "الحرب العالمية", "term3": "النظام الدولي"}, "ministry_url": "https://education.gov.dz/wp-content/uploads/2015/04/Programme-Histoire-2AS.pdf"}
+                "math": {
+                    "content": "الدوال العددية، المتتاليات، الهندسة الفضائية، الإحصاء والاحتمالات.",
+                    "distribution": [
+                        "الدوال والاشتقاقية",
+                        "المتتاليات العددية",
+                        "الهندسة الفضائية والإحصاء"
+                    ]
+                },
+                "physics": {
+                    "content": "الطاقة وانحفاظها، الكهرباء، التفاعلات الكيميائية والمغناطيسية.",
+                    "distribution": [
+                        "الطاقة الميكانيكية والداخلية",
+                        "الظواهر الكهربائية والمحلول المائي",
+                        "الكهرومغناطيسية"
+                    ]
+                },
+                "technology": {
+                    "content": "الأنظمة الآلية، الهندسة الميكانيكية، الهندسة المدنية، الهندسة الكهربائية، هيدروليك وتصنيع.",
+                    "distribution": [
+                        "التحليل الوظيفي للأنظمة الآلية والأنظمة المدمجة",
+                        "دراسة المواد والمقاومة والتصميم الميكانيكي",
+                        "التركيبات الكهربائية والمنطق المبرمج",
+                        "الإنشاءات والمخططات والهندسة المدنية"
+                    ]
+                },
+                "arabic": {
+                    "content": "الأدب العباسي والنثر العلمي والقواعد والبلاغة.",
+                    "distribution": [
+                        "النصوص الأدبية والنقدية العباسية",
+                        "القواعد النحوية والصرفية"
+                    ]
+                },
+                "french": {
+                    "content": "Le discours d'exhortation, le texte argumentatif.",
+                    "distribution": [
+                        "Le débat d'idées",
+                        "L'appel et le compte rendu"
+                    ]
+                },
+                "english": {
+                    "content": "Technology, safety, peace, environment.",
+                    "distribution": [
+                        "Make Peace, Waste Not Want Not, Budding Scientist"
+                    ]
+                },
+                "history": {
+                    "content": "الحركة الاستعمارية والحركة الوطنية الجزائرية.",
+                    "distribution": [
+                        "التوسع الاستعماري والمقاومة الوطنية"
+                    ]
+                },
+                "islamic": {
+                    "content": "أحكام المعاملات ومصادر التشريع والتربية الأخلاقية.",
+                    "distribution": [
+                        "مصادر التشريع والمعاملات المالية"
+                    ]
+                },
+                "philosophy": {
+                    "content": "مدخل للفلسفة، المشكلة العلمية والسؤال الفلسفي، المنطق الصوري.",
+                    "distribution": [
+                        "السؤال الفلسفي والمنطق الصوري"
+                    ]
+                }
             }
         },
         "gestion": {
-            "name": "تسيير واقتصاد",
+            "name": "شعبة تسيير واقتصاد",
             "subjects": {
-                "economics": {"content": "المحاسبة، الاقتصاد، التسيير.", "distribution": {"term1": "مبادئ الاقتصاد", "term2": "المحاسبة", "term3": "التسيير"}, "ministry_url": "https://education.gov.dz/wp-content/uploads/2015/04/Programme-Gestion-2AS.pdf"},
-                "math": {"content": "الدوال، الإحصاء.", "distribution": {"term1": "الدوال", "term2": "الإحصاء", "term3": "مراجعة"}, "ministry_url": "https://education.gov.dz/wp-content/uploads/2015/04/Programme-Math-2AS.pdf"}
+                "math": {
+                    "content": "الدوال العددية، الإحصاء والاحتمالات، المتتاليات، البرمجة الخطية والتنظيم العددي.",
+                    "distribution": [
+                        "الدوال والاشتقاقية وحساب التغيرات",
+                        "المتتاليات العددية والاستثمار المالي",
+                        "الإحصاء ذو متغيرين والاحتمالات"
+                    ]
+                },
+                "economics": {
+                    "content": "المبادئ الأساسية للاقتصاد المالي، السوق والأسعار، النقود والبنوك، التجارة الخارجية، النقابات والعمل.",
+                    "distribution": [
+                        "المؤسسة الاقتصادية ووظائفها والإنتاج",
+                        "السوق وأنواعه والأسعار والمنافسة",
+                        "النقود والوظائف والمؤسسات المصرفية",
+                        "التجارة الخارجية وميزان المدفوعات"
+                    ]
+                },
+                "law": {
+                    "content": "العقد وأنواعه، التزامات أطراف العقد، عقد العمل، الشركات التجارية (شركة الأشخاص والأموال).",
+                    "distribution": [
+                        "مفهوم القانون وأشكاله ومصادره",
+                        "عقد العمل والشروط والتنظيم القانوني للعمل",
+                        "الشركات التجارية وتأسيسها وأنواعها"
+                    ]
+                },
+                "arabic": {
+                    "content": "الأدب في العصر العباسي، المقال والنثر الإداري، القواعد والبلاغة.",
+                    "distribution": [
+                        "النصوص الأدبية والنثر العلمي",
+                        "القواعد والبلاغة والعروض"
+                    ]
+                },
+                "french": {
+                    "content": "Le discours argumentatif, le rapport, le texte d'information économique.",
+                    "distribution": [
+                        "Le débat d'idées et la lettre formelle",
+                        "Le fait divers et le compte rendu"
+                    ]
+                },
+                "english": {
+                    "content": "Business, trade, administration, communication.",
+                    "distribution": [
+                        "Business is Business, Budding Scientist"
+                    ]
+                },
+                "history": {
+                    "content": "تاريخ الاقتصاد العالمي، حركة الاستعمار والحركة الوطنية الجزائرية.",
+                    "distribution": [
+                        "الاستعمار والمقاومة الجزائرية"
+                    ]
+                },
+                "islamic": {
+                    "content": "المعاملات المالية والاقتصادية في الشريعة الإسلامية.",
+                    "distribution": [
+                        "الربا والمعاملات المالية المعاصرة"
+                    ]
+                },
+                "philosophy": {
+                    "content": "المشكلة الفلسفية، فلسفة العلوم والمنطق.",
+                    "distribution": [
+                        "السؤال الفلسفي والمنطق الصوري"
+                    ]
+                }
+            }
+        },
+        "lettres": {
+            "name": "شعبة آداب وفلسفة",
+            "subjects": {
+                "philosophy": {
+                    "content": "المشكلة الفلسفية والأشكال العلمية، إشكالية الإدراك والعالم الخارجي، الذاكرة والتخيل، اللغة والفكر، الشغل والأخلاق، المنطق.",
+                    "distribution": [
+                        "إشكالية الإدراك الحسي والمعرفي والذاكرة والتخيل",
+                        "اللغة والفكر، العلاقات بين الدال والمدلول",
+                        "المنطق الصوري والرياضي واستغلال النظم Logic",
+                        "الأخلاق والسلوك الفردي والجماعي والشغل"
+                    ]
+                },
+                "arabic": {
+                    "content": "الأدب العباسي وأدب العصر المملوكي والأندلسي، البلاغة (المعاني والبيان والمبديع)، النقد الأدبي، أحكام النحو والصرف والعروض.",
+                    "distribution": [
+                        "الشعر العباسي (شعر الحكمة، الزهد، الوصف)",
+                        "النثر المملوكي والعصر الأندلسي (الموشحات)",
+                        "البلاغة والنقد الأدبي وقواعد اللغة العميقة",
+                        "العروض والتغيرات الطارئة على البحور"
+                    ]
+                },
+                "french": {
+                    "content": "Le discours d'exhortation, le débat d'idées, le roman historique / le récit.",
+                    "distribution": [
+                        "Le débat d'idées et le discours d'opinion",
+                        "Le texte d'exhortation / L'appel humanitaire",
+                        "Le récit littéraire et la critique"
+                    ]
+                },
+                "english": {
+                    "content": "Intercultural study, literature, art, history, ethics, advanced writing.",
+                    "distribution": [
+                        "Make Peace, Cultural Crossroads, Literature and Arts"
+                    ]
+                },
+                "history": {
+                    "content": "الاستعمار في القرن 19، الحركة الوطنية الجزائرية، القضايا الدولية الكبرى بين الحربين.",
+                    "distribution": [
+                        "الاستعمار في إفريقيا وآسيا",
+                        "الحركة الوطنية الجزائرية ووسائل المقاومة",
+                        "العلاقات الدولية وأزمة النظام العالمي"
+                    ]
+                },
+                "islamic": {
+                    "content": "الفكر الإسلامي، المقاصد الشرعية، الأحوال الشخصية والمعاملات.",
+                    "distribution": [
+                        "مقاصد الشريعة الإسلامية والدراسات الفقهية",
+                        "الأخلاق والمعاملات في الأسرة والمجتمع"
+                    ]
+                },
+                "math": {
+                    "content": "الإحصاء، الاحتمالات، الدوال العددية البسيطة والنسب.",
+                    "distribution": [
+                        "الدوال والتمثيل البياني الإحصائي"
+                    ]
+                }
             }
         },
         "langues": {
-            "name": "لغات أجنبية",
+            "name": "شعبة لغات أجنبية",
             "subjects": {
-                "arabic": {"content": "الأدب الحديث.", "distribution": {"term1": "الأدب", "term2": "المقالة", "term3": "مراجعة"}, "ministry_url": "https://education.gov.dz/wp-content/uploads/2015/04/Programme-Arabe-2AS.pdf"},
-                "french": {"content": "Textes littéraires, grammaire.", "distribution": {"term1": "Textes", "term2": "Grammaire", "term3": "Dissertation"}, "ministry_url": "https://education.gov.dz/wp-content/uploads/2015/04/Programme-Francais-2AS.pdf"},
-                "english": {"content": "Texts, grammar, essay.", "distribution": {"term1": "Texts", "term2": "Grammar", "term3": "Essay"}, "ministry_url": "https://education.gov.dz/wp-content/uploads/2015/04/Programme-Anglais-2AS.pdf"},
-                "philosophy": {"content": "نشأة الفلسفة.", "distribution": {"term1": "نشأة الفلسفة", "term2": "الفكر", "term3": "الملاحظة"}, "ministry_url": "https://education.gov.dz/wp-content/uploads/2015/04/Programme-Philosophie-2AS.pdf"}
+                "french": {
+                    "content": "Analyse littéraire, le débat d'idées, le texte d'exhortation, la critique d'œuvres, la synthèse de documents.",
+                    "distribution": [
+                        "Le débat d'idées (Plaidoyer / Réquisitoire)",
+                        "Le texte d'exhortation / L'appel",
+                        "La nouvelle littéraire et la critique",
+                        "Techniques d'expression: La synthèse de documents"
+                    ]
+                },
+                "english": {
+                    "content": "Literature, culture, world history, global issues, communication skills, advanced syntax and essay writing.",
+                    "distribution": [
+                        "Unit 1: Cultural Crossroads",
+                        "Unit 2: Make Peace",
+                        "Unit 3: Waste Not, Want Not",
+                        "Unit 4: Literature and Society"
+                    ]
+                },
+                "arabic": {
+                    "content": "الأدب العباسي والأندلسي، البلاغة النقدية، قواعد اللغة والتعبير الأدبي.",
+                    "distribution": [
+                        "الشعر والنثر في العصور العباسية والأندلسية",
+                        "البلاغة والقواعد والنقد الأدبي"
+                    ]
+                },
+                "philosophy": {
+                    "content": "المشكلة الفلسفية والسؤال العلمي، المنطق، فلسفة اللغة والتواصل.",
+                    "distribution": [
+                        "إشكالية الفكر واللغة والمنطق"
+                    ]
+                },
+                "history": {
+                    "content": "تاريخ الاستعمار، الحركة الوطنية الجزائرية، العلاقات الدولية.",
+                    "distribution": [
+                        "الحركة الوطنية والمقاومة الجزائرية"
+                    ]
+                },
+                "islamic": {
+                    "content": "العقيدة، المقاصد، المعاملات والأخلاق الإسلامية.",
+                    "distribution": [
+                        "مصادر التشريع والقيم الإسلامية"
+                    ]
+                },
+                "math": {
+                    "content": "الإحصاء والدوال الأساسية الحسابية.",
+                    "distribution": [
+                        "الإحصاء والتنظيم العددي"
+                    ]
+                }
             }
         }
     },
     "3AS": {
         "sciences": {
-            "name": "علوم تجريبية",
+            "name": "شعبة علوم تجريبية",
             "subjects": {
-                "math": {"content": "النهايات، الاستمرارية، الاشتقاقية، الدوال الأسية واللوغاريتمية، المتتاليات، التكامل، الأعداد المركبة، الاحتمالات.", "distribution": {"term1": "النهايات والاستمرارية", "term2": "المعادلات التفاضلية والتكامل", "term3": "الأعداد المركبة والاحتمالات"}, "ministry_url": "https://education.gov.dz/wp-content/uploads/2015/04/Programme-Math-3AS.pdf"},
-                "physics": {"content": "المتابعة الزمنية لتحول كيميائي، التحولات النووية، الظواهر الكهربائية (RC, RL)، التوازن الكيميائي، الميكانيك.", "distribution": {"term1": "المتابعة الزمنية والتحولات النووية", "term2": "الظواهر الكهربائية والتوازن", "term3": "الميكانيك والمراجعة"}, "ministry_url": "https://education.gov.dz/wp-content/uploads/2015/04/Programme-Physique-3AS.pdf"},
-                "sciences": {"content": "تركيب البروتين، التحويلات الطاقوية، التكتونية.", "distribution": {"term1": "الوراثة", "term2": "المناعة", "term3": "البيوتكنولوجيا"}, "ministry_url": "https://education.gov.dz/wp-content/uploads/2015/04/Programme-SVT-3AS.pdf"},
-                "arabic": {"content": "الأدب الجزائري، المقالة النقدية.", "distribution": {"term1": "الأدب الجزائري", "term2": "المقالة النقدية", "term3": "مراجعة"}, "ministry_url": "https://education.gov.dz/wp-content/uploads/2015/04/Programme-Arabe-3AS.pdf"},
-                "french": {"content": "Analyse de textes, dissertation.", "distribution": {"term1": "Analyse", "term2": "Dissertation", "term3": "Commentaire"}, "ministry_url": "https://education.gov.dz/wp-content/uploads/2015/04/Programme-Francais-3AS.pdf"},
-                "english": {"content": "Literature, grammar, essay.", "distribution": {"term1": "Literature", "term2": "Grammar", "term3": "Essay"}, "ministry_url": "https://education.gov.dz/wp-content/uploads/2015/04/Programme-Anglais-3AS.pdf"},
-                "history": {"content": "الثورة الجزائرية، النظام الدولي الجديد.", "distribution": {"term1": "الثورة", "term2": "النظام الدولي", "term3": "القضايا المعاصرة"}, "ministry_url": "https://education.gov.dz/wp-content/uploads/2015/04/Programme-Histoire-3AS.pdf"},
-                "philosophy": {"content": "إدراك العالم الخارجي، الأخلاق، فلسفة العلوم.", "distribution": {"term1": "إدراك العالم", "term2": "الأخلاق", "term3": "فلسفة العلوم"}, "ministry_url": "https://education.gov.dz/wp-content/uploads/2015/04/Programme-Philosophie-3AS.pdf"},
-                "informatics": {"content": "Algorithms, Python programming.", "distribution": {"term1": "Algorithms", "term2": "Python", "term3": "Data"}, "ministry_url": "https://education.gov.dz/wp-content/uploads/2015/04/Programme-Informatique-3AS.pdf"}
+                "math": {
+                    "content": "الدوال العددية (الأسية واللوغاريتمية)، المتتاليات والبرهان بالتراجع، التزايد المقارن، التكامل والحساب التكاملي، الاحتمالات الشرطية والمتغيرات العشوائية، الهندسة في الفضاء.",
+                    "distribution": [
+                        "الدوال الأسية واللوغاريتمية وتطبيقاتها",
+                        "المتتاليات العددية ونهايتها والبرهان بالتراجع",
+                        "الحساب التكاملي والدوال الأصلية",
+                        "الهندسة في الفضاء والاحتمالات الشرطية"
+                    ]
+                },
+                "physics": {
+                    "content": "المتابعة الزمنية لتحول كيميائي، التحولات النووية (النشاط الإشعاعي، الإندماج والإنشطار)، الظواهر الكهربائية (RC وRL)، تطور جملة كيميائية نحو حالة التوازن (الأحماض والقواعد)، تطور جملة ميكانيكية (قوانين نيوتن، القذائف، الأقمار الاصطناعية)، اهتزازات الميكانيكية والكهربائية.",
+                    "distribution": [
+                        "المتابعة الزمنية لتحول كيميائي في وسط مائي",
+                        "التحولات النووية واستغلال الطاقة النووية",
+                        "ظواهر الكهرباء: المكثفة والوشيعة (Dôle RC et RL)",
+                        "تطور جملة كيميائية نحو حالة التوازن (pH والمعايرة)",
+                        "تطور جملة ميكانيكية (حركة الأقمار، القذائف، السقوط)"
+                    ]
+                },
+                "sciences": {
+                    "content": "تركيب البروتين، البنية الفراغية للبروتين ووظيفتها، النشاط الانزيمي للبروتينات، دور البروتينات في الدفاع عن الذات (المناعة)، دور البروتينات في الاتصال العصبي (الكمون الغشائي، مشبك)، التكتونية العامة والنشاط التكتوني والبنيات الجيولوجية المرتبطة به.",
+                    "distribution": [
+                        "التعبير الجيني وتركيب البروتين والعلاقة بين البنية الوظيفية",
+                        "النشاط الانزيمي للبروتينات وتأثير العوامل",
+                        "دور البروتينات في الدفاع عن الذات (المناعة الخلطية والخلية)",
+                        "دور البروتينات في النقل العصبي والاتصال العصبي",
+                        "الجيولوجيا: التكتونية العامة وظواهر الغوص والتصادم"
+                    ]
+                },
+                "arabic": {
+                    "content": "أدب عصر الضعف والانحطاط، الأدب الحديث (مدرسة الإحيائيين، الرومانسية، شعر التفعيلة والالتزام)، النثر الحديث (المقال، القصة، المسرح)، البلاغة، الإعراب اللفظي والتمديري، أحكام الاتساق والانسجام.",
+                    "distribution": [
+                        "أدب عصر الضعف: شعر المدائح النبوية والزهد والنثر العلمي",
+                        "الأدب الحديث: مدرسة المنفى، الرومانسية وشعر الالتزام",
+                        "قضايا المعاصرة: فلسطين والثورة الجزائرية في الشعر العربي",
+                        "النثر الحديث (المقال وفنونه)، القواعد والإعراب والبلاغة"
+                    ]
+                },
+                "french": {
+                    "content": "Le texte historique / Le témoignage historique. Intention de communication: Informer d'un fait d'histoire, témoigner. Projet 1: Produire un texte pour informer d'un fait d'histoire. Projet 2: Le débat d'idées. Projet 3: L'appel.",
+                    "distribution": [
+                        "Projet 1: Produire un texte pour présenter un fait d'histoire (Séquence 1 & 2)",
+                        "Projet 2: Élaborer un débat d'idées (Plaidoyer et réquisitoire)",
+                        "Projet 3: Lancer un appel / Texte d'exhortation",
+                        "Techniques d'expression: Compte rendu objectif et compte rendu critique"
+                    ]
+                },
+                "english": {
+                    "content": "Ethics in business (Corruption, counterfeit, fraud), Ancient civilizations, Education in the world, Feelings and emotions, Syntax, Cohesion, Essay types.",
+                    "distribution": [
+                        "Unit 1: Exploring the Past (Ancient Civilizations)",
+                        "Unit 2: Ethics in Business (Anti-corruption and honesty)",
+                        "Unit 3: Schools: Different Systems (Education)",
+                        "Unit 4: Feelings and Emotions (Psychology and human interactions)"
+                    ]
+                },
+                "history": {
+                    "content": "العالم غداة الحرب العالمية الثانية وتطور العلاقات الدولية (الصراع بين الشرق والغرب - الحرب الباردة)، الثورة التحريرية الجزائرية (1954-1962)، استرجاع السيادة الوطنية وبناء الدولة، حركات التحرر في العالم الثالث.",
+                    "distribution": [
+                        "بروز الصراع وتشكل العالم (الحرب الباردة والاستقطاب الثنائي)",
+                        "مسار استراتيجيات الهيمنة والمواجهة، التعايش السلمي وانفراج الأزمات",
+                        "الثورة الجزائرية: اندلاعها، استراتيجيتها، ومراحل تنظيمها (1954-1962)",
+                        "استرجاع السيادة وتأسيس الدولة الجزائرية، العالم الثالث وحركات التحرر"
+                    ]
+                },
+                "islamic": {
+                    "content": "العقيدة الإسلامية وآثارها على الفرد والمجتمع، وسائل القرآن في تثبيت العقيدة، الإسلام والرسالات السماوية السابق، الربا وأحكامه، المعاملات المالية الحديثة، الأسرة في الشريعة (الميراث، النسب، الكفالة).",
+                    "distribution": [
+                        "عقيدة الإسلام وآثارها ووسائل تثبيتها في القرآن الكريم",
+                        "موقف القرآن من الرسالات السماوية السابقة (الياهودية والمسيحية)",
+                        "المصالح المرسلة ومصادر التشريع الإسلامي",
+                        "المعاملات المالية والمحرمات (الربا البيوع المحرمة)، أحكام الميراث"
+                    ]
+                },
+                "philosophy": {
+                    "content": "المشكلة الفلسفية والإشكالية العلمية، العلوم التجريبية والعلوم الإنسانية (علم النفس، التاريخ، الإحصاء)، أصل الرياضيات والبيولوجيا، القيمة الحقيقة والعدالة والأخلاق.",
+                    "distribution": [
+                        "فلسفة العلوم: العلوم الدقيقة (الرياضيات، المادة الحية والميتة)",
+                        "العلوم الإنسانية: التاريخ، علم النفس، علم الاجتماع",
+                        "العلاقات الاجتماعية: الأخلاق بين المطلق والنسبي، العدالة والحق"
+                    ]
+                }
             }
         },
         "math": {
-            "name": "شعبة الرياضيات",
+            "name": "شعبة رياضيات",
             "subjects": {
-                "math": {"content": "النهايات، الاستمرارية، الاشتقاقية، المعادلات التفاضلية، التكامل، الأعداد المركبة، الاحتمالات.", "distribution": {"term1": "النهايات والاستمرارية", "term2": "المعادلات التفاضلية والتكامل", "term3": "الأعداد المركبة"}, "ministry_url": "https://education.gov.dz/wp-content/uploads/2015/04/Programme-Math-3AS.pdf"},
-                "physics": {"content": "المتابعة الزمنية، النووية، الظواهر الكهربائية، الميكانيك.", "distribution": {"term1": "المتابعة الزمنية", "term2": "الكهرباء", "term3": "الميكانيك"}, "ministry_url": "https://education.gov.dz/wp-content/uploads/2015/04/Programme-Physique-3AS.pdf"}
+                "math": {
+                    "content": "الأعداد المركبة والتحويلات النقطية، القسمة في Z والحسابات والإعداد الأولية، الدوال الأسية واللوغاريتمية، المتتاليات والبرهان بالتراجع، التكامل والتفاضل، الهندسة في الفضاء والاحتمالات.",
+                    "distribution": [
+                        "الأعداد المركبة والتحويلات النقطية المباشرة",
+                        "الحساب في Z (القسمة الإقليدية، الموافقات، الأعداد الأولية)",
+                        "الدوال العددية (الأسية، اللوغاريتمية، التزايد المقارن، الحساب التكاملي)",
+                        "المتتاليات العددية والبرهان بالتراجع",
+                        "الهندسة في الفضاء والاحتمالات التجميعية"
+                    ]
+                },
+                "physics": {
+                    "content": "المتابعة الزمنية للتحولات الكيميائية، التحولات النووية، الظواهر الكهربائية (RC, RL, RLC)، التوازن الكيميائي والأحماض والأسس، قوانين نيوتن والميكانيك والنواس، الاهتزازات والضوء.",
+                    "distribution": [
+                        "الكيمياء: المتابعة الزمنية، سرعة التفاعل، التوازن الكيميائي، المعايرة",
+                        "الفيزياء النووية والظواهر الكهربائية وحساب الطاقة",
+                        "الميكانيكا: حركة الأجسام، القذائف، حركة الاقمار والدوران",
+                        "الاهتزازات الميكانيكية والكهربائية وانتشار أمواج الضوء"
+                    ]
+                },
+                "sciences": {
+                    "content": "تركيب البروتين، النشاط الإنزيمي، المناعة والتكافؤ العصبي والهرموني.",
+                    "distribution": [
+                        "آليات التعبير الجيني والبنية الفراغية للبروتين",
+                        "الاستجابة المناعية الخلطية والخلوية",
+                        "الاتصال العصبي والكمون الغشائي"
+                    ]
+                },
+                "arabic": {
+                    "content": "أدب عصر الضعف، الأدب الحديث والمعاصر، شعر التفعيلة والالتزام، النثر العلمي والمقال، القواعد والبلاغة والعروض.",
+                    "distribution": [
+                        "عصر الضعف والأدب الحديث (الشعر والنثر)",
+                        "قضايا التحرر العربي في الشعر (فلسطين والجزائر)",
+                        "الإعراب والبلاغة والنقد الأدبي"
+                    ]
+                },
+                "french": {
+                    "content": "Le texte historique, le débat d'idées, l'appel.",
+                    "distribution": [
+                        "Projet 1: Le texte d'histoire et le témoignage",
+                        "Projet 2: Le débat d'idées",
+                        "Projet 3: L'appel / Le discours d'exhortation"
+                    ]
+                },
+                "english": {
+                    "content": "Ancient civilizations, Ethics in business, Education, Psychology.",
+                    "distribution": [
+                        "Unit 1: Exploring the Past",
+                        "Unit 2: Ethics in Business",
+                        "Unit 3: Education and Society"
+                    ]
+                },
+                "history": {
+                    "content": "العلاقات الدولية والحرب الباردة، الثورة الجزائرية التحريرية، استرجاع السيادة.",
+                    "distribution": [
+                        "العالم بين الشرق والغرب والحرب الباردة",
+                        "الثورة الجزائرية التحريرية استراتيجية وتطبيقا"
+                    ]
+                },
+                "islamic": {
+                    "content": "العقيدة، الرسالات السماوية، وسائل تثبيت الإيمان، المعاملات المالية والميراث.",
+                    "distribution": [
+                        "العقيدة الإسلامية ومصادر التشريع والأسرة"
+                    ]
+                },
+                "philosophy": {
+                    "content": "فلسفة العلوم، الرياضيات، المادة الحية والميتة، العلوم الإنسانية.",
+                    "distribution": [
+                        "المشكلة العلمية، الرياضيات والعلوم الدقيقة"
+                    ]
+                }
             }
         },
         "tech": {
-            "name": "تقني رياضي",
+            "name": "شعبة تقني رياضي",
             "subjects": {
-                "math": {"content": "النهايات، الاستمرارية، الاشتقاقية، التكامل، الأعداد المركبة.", "distribution": {"term1": "النهايات", "term2": "التكامل", "term3": "الأعداد المركبة"}, "ministry_url": "https://education.gov.dz/wp-content/uploads/2015/04/Programme-Math-3AS.pdf"},
-                "physics": {"content": "المتابعة الزمنية، الكهرباء، الميكانيك.", "distribution": {"term1": "المتابعة الزمنية", "term2": "الكهرباء", "term3": "الميكانيك"}, "ministry_url": "https://education.gov.dz/wp-content/uploads/2015/04/Programme-Physique-3AS.pdf"}
+                "math": {
+                    "content": "الدوال الأسية واللوغاريتمية، المتتاليات والبرهان بالتراجع، الأعداد المركبة، الحساب التكاملي، والاحتمالات.",
+                    "distribution": [
+                        "الدوال الأسية واللوغاريتمية والأنظمة الحسابية",
+                        "المتتاليات العددية والبرهان بالتراجع",
+                        "الأعداد المركبة والحساب التكاملي والاحتمالات"
+                    ]
+                },
+                "physics": {
+                    "content": "المتابعة الزمنية، الكهرباء (RC, RL)، الميكانيكا وقوانين نيوتن، الأحماض والأسس، والاهتزازات.",
+                    "distribution": [
+                        "التحولات الكيميائية والمتابعة الزمنية",
+                        "الظواهر الكهربائية والميكانيكية",
+                        "الكيمياء والاهتزازات"
+                    ]
+                },
+                "technology": {
+                    "content": "الأنظمة الآلية والمنطق المبرمج، المقاومة المواد، الآليات والديناميكا، التصميم الميكانيكي، الهندسة المدنية (المنشآت الخرسانية، الطرق)، الهندسة الكهربائية (المحركات، الدارات المدمجة، المتكمات).",
+                    "distribution": [
+                        "الدراسة الوظيفية للأنظمة الآلية والأنظمة الرقمية",
+                        "مقاومة المواد والتصميم الميكانيكي والديناميكا",
+                        "الهندسة المدنية: المنشآت علوية وسفلية، الخرسانة المسلحة",
+                        "الهندسة الكهربائية: التيار الثلاثي الأطوار، المحركات والدارات المبرمجة"
+                    ]
+                },
+                "arabic": {
+                    "content": "أدب عصر الضعف والأدب الحديث وشعر الالتزام والمقال.",
+                    "distribution": [
+                        "النصوص الأدبية والنثرية والقواعد والبلاغة"
+                    ]
+                },
+                "french": {
+                    "content": "Le texte historique, le débat d'idées, l'appel.",
+                    "distribution": [
+                        "Projet 1: Texte historique",
+                        "Projet 2: Débat d'idées",
+                        "Projet 3: L'appel"
+                    ]
+                },
+                "english": {
+                    "content": "Ethics in business, Technology, Ancient civilizations.",
+                    "distribution": [
+                        "Exploring the Past, Ethics in Business, Education"
+                    ]
+                },
+                "history": {
+                    "content": "الحرب الباردة، الثورة الجزائرية واسترجاع السيادة.",
+                    "distribution": [
+                        "الصراع بين الشرق والغرب والثورة الجزائرية"
+                    ]
+                },
+                "islamic": {
+                    "content": "العقيدة، مصادر التشريع، البيوع والمعاملات المالية والميراث.",
+                    "distribution": [
+                        "أحكام التشريع الإسلامي والمعاملات"
+                    ]
+                },
+                "philosophy": {
+                    "content": "المشكلة العلمية، فلسفة العلوم والرياضيات والمنطق.",
+                    "distribution": [
+                        "فلسفة العلوم والتقنيات"
+                    ]
+                }
             }
         },
         "gestion": {
-            "name": "تسيير واقتصاد",
+            "name": "شعبة تسيير واقتصاد",
             "subjects": {
-                "economics": {"content": "المحاسبة، الاقتصاد، القانون.", "distribution": {"term1": "المحاسبة", "term2": "الاقتصاد", "term3": "القانون"}, "ministry_url": "https://education.gov.dz/wp-content/uploads/2015/04/Programme-Gestion-3AS.pdf"},
-                "math": {"content": "الدوال، الإحصاء، المصفوفات.", "distribution": {"term1": "الدوال", "term2": "الإحصاء", "term3": "المصفوفات"}, "ministry_url": "https://education.gov.dz/wp-content/uploads/2015/04/Programme-Math-3AS.pdf"}
+                "math": {
+                    "content": "الدوال الأسية واللوغاريتمية، المتتاليات المالية والحسابية، الإحصاء ذو متغيرين، الاحتمالات الشرطية والدمج.",
+                    "distribution": [
+                        "الدوال الأسية واللوغاريتمية وتطبيقاتها الاقتصادية",
+                        "المتتاليات العددية والاستثمار والقروض المصرفية",
+                        "الإحصاء والاحتمالات الشرطية"
+                    ]
+                },
+                "economics": {
+                    "content": "التضخم، البطالة، التنسيق الاقتصادي والتنمية، التجارة الدولية، النظام المصرفي والمالية العامة (الميزانية والدين العام).",
+                    "distribution": [
+                        "الميزانية العامة للدولة والضرائب والرسوم",
+                        "التضخم والبطالة وسياسات التشغيل",
+                        "التجارة الخارجية والمنظمات الاقتصادية الدولية"
+                    ]
+                },
+                "law": {
+                    "content": "عقد البيع، عقد الشركة التجارية، الشركة ذات المسؤولية المحدودة (SARL)، الشركة المساهمة (SPA)، علاقات العمل الفردية والجماعية، منازعات العمل.",
+                    "distribution": [
+                        "عقد البيع والالتزامات الحقوقية",
+                        "الشركات التجارية (تأسيسها، إدارتها، انقضاؤها)",
+                        "علاقات العمل الجماعية ومنازعات العمل والضمان الاجتماعي"
+                    ]
+                },
+                "arabic": {
+                    "content": "أدب عصر الضعف والأدب الحديث، المقال السياسي والاقتصادي، القواعد والإعراب.",
+                    "distribution": [
+                        "الأدب والشعر والنثر والمقال",
+                        "القواعد والبلاغة والإعراب"
+                    ]
+                },
+                "french": {
+                    "content": "Le texte historique, le débat d'idées, l'appel économique et social.",
+                    "distribution": [
+                        "Texte d'histoire et le débat d'idées"
+                    ]
+                },
+                "english": {
+                    "content": "Ethics in business, Money and banking, Global trade, Management.",
+                    "distribution": [
+                        "Ethics in Business, Exploring the Past, Safety First"
+                    ]
+                },
+                "history": {
+                    "content": "الحرب الباردة والعلاقات الاقتصادية الدولية، الثورة الجزائرية واستقلال الجزائر.",
+                    "distribution": [
+                        "العلاقات الدولية والثورة الجزائرية"
+                    ]
+                },
+                "islamic": {
+                    "content": "العقيدة، المعاملات المالية الحديثة، الربا، الميراث والأسرة.",
+                    "distribution": [
+                        "المعاملات المالية والميراث في الإسلام"
+                    ]
+                },
+                "philosophy": {
+                    "content": "الفلسفة والاقتصاد، العولمة والتاريخ، الأخلاق والشغل.",
+                    "distribution": [
+                        "الأخلاق والعمل والتاريخ"
+                    ]
+                }
             }
         },
         "lettres": {
-            "name": "آداب وفلسفة",
+            "name": "شعبة آداب وفلسفة",
             "subjects": {
-                "philosophy": {"content": "إدراك العالم الخارجي، الأخلاق، فلسفة العلوم.", "distribution": {"term1": "إدراك العالم", "term2": "الأخلاق", "term3": "فلسفة العلوم"}, "ministry_url": "https://education.gov.dz/wp-content/uploads/2015/04/Programme-Philosophie-3AS.pdf"},
-                "arabic": {"content": "الأدب الجزائري، المقالة النقدية.", "distribution": {"term1": "الأدب الجزائري", "term2": "المقالة النقدية", "term3": "مراجعة"}, "ministry_url": "https://education.gov.dz/wp-content/uploads/2015/04/Programme-Arabe-3AS.pdf"},
-                "history": {"content": "الثورة الجزائرية، النظام الدولي.", "distribution": {"term1": "الثورة", "term2": "النظام الدولي", "term3": "مراجعة"}, "ministry_url": "https://education.gov.dz/wp-content/uploads/2015/04/Programme-Histoire-3AS.pdf"}
+                "philosophy": {
+                    "content": "الإدراك والإحساس، الذاكرة والتخيل، اللغة والفكر، الشعور واللاشعور، الأسرة والمجتمع، الأخلاق بين المطلق والنسبي، الحقوق والواجبات والعدالة، الشغل والإنتاج، أصل الرياضيات، البيولوجيا، العلوم الإنسانية (التاريخ، علم النفس).",
+                    "distribution": [
+                        "إشكالية الإدراك والحس، الذاكرة، التخيل، واللغة والفكر",
+                        "إشكالية الشعور واللاشعور، العلاقات الأسرية والاجتماعية",
+                        "الأخلاق (المطلق والنسبي)، الحق والواجب والعدالة الاجتماعية",
+                        "فلسفة العلوم: الرياضيات، البيولوجيا، والتاريخ والعلوم الإنسانية"
+                    ]
+                },
+                "arabic": {
+                    "content": "أدب عصر الضعف (المدائح، الزهد، النثر العلمي)، الأدب الحديث (الرومانسية، مدرسة المنفى)، شعر التفعيلة والالتزام والقضية الفلسطينية والجزائرية، فنون النثر (المقال، القصة، المسرح)، النقد الأدبي، القواعد النحوية والصرفية والعروض.",
+                    "distribution": [
+                        "أدب عصر الضعف والانحطاط وحركة الإصلاح الأدبي",
+                        "مدرسة المحجر والرومانسية والشعر الحر وشعر الالتزام",
+                        "القضايا التحررية (فلسطين والجزائر) في الشعر المعاصر",
+                        "تطور النثر العربي الحديث (المقال والمسرح والقصة)",
+                        "البلاغة والنقد والإعراب العميق والتغيرات العروضية"
+                    ]
+                },
+                "french": {
+                    "content": "Le texte historique / Témoignage, le débat d'idées, l'appel, l'analyse littéraire d'œuvres, la synthèse critique.",
+                    "distribution": [
+                        "Projet 1: Le texte historique et le témoignage d'acteurs de l'histoire",
+                        "Projet 2: Le débat d'idées (Confrontation de points de vue)",
+                        "Projet 3: L'appel / Le discours d'exhortation pour une cause humaine",
+                        "Techniques d'expression: La synthèse de documents et le compte rendu critique"
+                    ]
+                },
+                "english": {
+                    "content": "Ancient civilizations, Ethics in business, Education, Feelings and emotions, Cultural interactions, Advanced writing and rhetoric.",
+                    "distribution": [
+                        "Unit 1: Exploring the Past (Civilizations)",
+                        "Unit 2: Ethics in Business",
+                        "Unit 3: Education Systems and Global Issues",
+                        "Unit 4: Feelings and Emotions / Literature"
+                    ]
+                },
+                "history": {
+                    "content": "الصراع بين الشرق والغرب (الحرب الباردة)، الثورة الجزائرية (1954-1962) استراتيجيات ومراحل، استرجاع السيادة الجزائرية، حركات التحرر والعالم الثالث.",
+                    "distribution": [
+                        "العالم بين الشرق والغرب وتطور العلاقات الدولية",
+                        "الثورة التحريرية الجزائرية ومراحل تحقيق النصر",
+                        "استرجاع السيادة الوطنية وبناء الدولة الجزائرية",
+                        "تفكك الكتلة الاستعمارية وحركات التحرر"
+                    ]
+                },
+                "islamic": {
+                    "content": "العقيدة، الرسالات السماوية، مصادر التشريع الإسلامي، أحكام الربا والبيوع، الميراث، النسب والكفالة.",
+                    "distribution": [
+                        "العقيدة الإسلامية وآثارها ومصادر التشريع",
+                        "أحكام الأسرة (الميراث، النسب، الكفالة)",
+                        "المعاملات المالية والبيوع المحرمة"
+                    ]
+                },
+                "math": {
+                    "content": "المتتاليات الحسابية والهندسية، الدوال العددية والتغيرات، الإحصاء والاحتمالات البسيطة.",
+                    "distribution": [
+                        "المتتاليات العددية والتنظيم العددي",
+                        "الدوال والتمثيل البياني والإحصاء"
+                    ]
+                }
             }
         },
         "langues": {
-            "name": "لغات أجنبية",
+            "name": "شعبة لغات أجنبية",
             "subjects": {
-                "arabic": {"content": "الأدب العربي الحديث.", "distribution": {"term1": "الأدب", "term2": "المقالة", "term3": "مراجعة"}, "ministry_url": "https://education.gov.dz/wp-content/uploads/2015/04/Programme-Arabe-3AS.pdf"},
-                "french": {"content": "Textes littéraires, dissertation.", "distribution": {"term1": "Textes", "term2": "Dissertation", "term3": "Commentaire"}, "ministry_url": "https://education.gov.dz/wp-content/uploads/2015/04/Programme-Francais-3AS.pdf"},
-                "english": {"content": "Literature, grammar, essay.", "distribution": {"term1": "Literature", "term2": "Grammar", "term3": "Essay"}, "ministry_url": "https://education.gov.dz/wp-content/uploads/2015/04/Programme-Anglais-3AS.pdf"},
-                "philosophy": {"content": "إدراك العالم الخارجي.", "distribution": {"term1": "إدراك", "term2": "الأخلاق", "term3": "فلسفة العلوم"}, "ministry_url": "https://education.gov.dz/wp-content/uploads/2015/04/Programme-Philosophie-3AS.pdf"}
+                "french": {
+                    "content": "Le texte historique et le témoignage, le débat d'idées, l'appel, la nouvelle fantastique/réaliste, le compte rendu critique et la synthèse.",
+                    "distribution": [
+                        "Projet 1: Présenter un fait d'histoire ou un témoignage historique",
+                        "Projet 2: Organiser un débat d'idées et rédiger un plaidoyer/réquisitoire",
+                        "Projet 3: Lancer un appel à la solidarité ou à la paix",
+                        "Techniques d'expression: Le compte rendu critique et l'analyse textuelle"
+                    ]
+                },
+                "english": {
+                    "content": "Ancient civilizations, Ethics in business, Education systems, Feelings and emotions, Cultural diversity, Advanced composition and grammar.",
+                    "distribution": [
+                        "Unit 1: Exploring the Past",
+                        "Unit 2: Ethics in Business",
+                        "Unit 3: Schools: Different Systems",
+                        "Unit 4: Feelings and Emotions",
+                        "Advanced Grammar and Text Analysis"
+                    ]
+                },
+                "arabic": {
+                    "content": "أدب عصر الضعف الأدبي، الشعر الحديث والمعاصر (شعر الالتزام والقضايا القومية)، المقال الأدبي والنقد، البلاغة والإعراب.",
+                    "distribution": [
+                        "أدب عصر الضعف والأدب الحديث",
+                        "شعر الالتزام والقضايا التحررية",
+                        "النثر الفني والمقال القواعد والبلاغة"
+                    ]
+                },
+                "philosophy": {
+                    "content": "الإدراك، اللغة والفكر، الشعور واللاشعور، الأخلاق والعدالة، فلسفة العلوم والرياضيات والبيولوجيا.",
+                    "distribution": [
+                        "إشكالية الفكر واللغة والإدراك",
+                        "الأخلاق والعدالة وفلسفة العلوم"
+                    ]
+                },
+                "history": {
+                    "content": "الحرب الباردة والعلاقات الدولية، الثورة الجزائرية التحريرية، استرجاع السيادة والتطوير.",
+                    "distribution": [
+                        "الصراع الشرقي الغربي والحرب الباردة",
+                        "الثورة الجزائرية التحريرية وبناء الدولة"
+                    ]
+                },
+                "islamic": {
+                    "content": "العقيدة، مصادر التشريع، أحكام الأسرة والمعاملات المالية والميراث.",
+                    "distribution": [
+                        "العقيدة ومصادر التشريع والمعاملات والأسرة"
+                    ]
+                },
+                "math": {
+                    "content": "المتتاليات العددية، الدوال الحسابية والإحصاء.",
+                    "distribution": [
+                        "المتتاليات العددية والتغيرات والإحصاء"
+                    ]
+                }
             }
         }
     }
 }
+
+
+# =========================================================
+# صمام الأمان: إكمال المواد المشتركة لجميع الشعب
+# =========================================================
+
+common_2as = {
+    "arabic": {"content": "الأدب العربي الحديث، المقالة.", "distribution": ["الأدب الحديث", "المقالة", "البلاغة"]},
+    "french": {"content": "Textes, grammaire.", "distribution": ["Textes", "Grammaire", "Expression"]},
+    "english": {"content": "Texts, grammar, writing.", "distribution": ["Texts", "Grammar", "Writing"]},
+    "history": {"content": "الثورة الجزائرية، الحرب العالمية.", "distribution": ["الثورة الجزائرية", "الحرب العالمية", "النظام الدولي"]},
+    "islamic": {"content": "القرآن، الحديث، الفقه.", "distribution": ["القرآن", "الحديث", "الفقه"]},
+    "philosophy": {"content": "نشأة الفلسفة، السؤال العلمي.", "distribution": ["نشأة الفلسفة", "السؤال العلمي", "الفكر واللغة"]},
+    "math": {"content": "الدوال، الإحصاء.", "distribution": ["الدوال", "الإحصاء", "المتتاليات"]},
+    "physics": {"content": "الطاقة، الناقلية.", "distribution": ["الطاقة", "الناقلية", "الأحماض"]}
+}
+
+common_3as = {
+    "arabic": {"content": "الأدب الجزائري، المقالة النقدية.", "distribution": ["الأدب الجزائري", "المقالة النقدية", "المراجعة"]},
+    "french": {"content": "Analyse, dissertation.", "distribution": ["Analyse", "Dissertation", "Commentaire"]},
+    "english": {"content": "Literature, grammar, essay.", "distribution": ["Literature", "Grammar", "Essay"]},
+    "history": {"content": "الثورة الجزائرية، النظام الدولي.", "distribution": ["الثورة الجزائرية", "النظام الدولي", "القضايا المعاصرة"]},
+    "islamic": {"content": "القرآن، الحديث، الفقه.", "distribution": ["القرآن", "الحديث", "الفقه"]},
+    "philosophy": {"content": "المشكلة والإشكالية، فلسفة العلوم.", "distribution": ["المشكلة والإشكالية", "فلسفة العلوم", "العلاقات الإنسانية"]},
+    "math": {"content": "الدوال، الإحصاء.", "distribution": ["الدوال", "الإحصاء", "المصفوفات"]},
+    "physics": {"content": "المتابعة الزمنية، الكهرباء.", "distribution": ["المتابعة الزمنية", "الكهرباء", "الميكانيك"]}
+}
+
+# دمج المواد المشتركة في كل شعبة (2AS)
+for stream in ["math", "tech", "gestion", "lettres", "langues"]:
+    if stream in CURRICULUM_DATA["2AS"] and "subjects" in CURRICULUM_DATA["2AS"][stream]:
+        for subj_key, subj_val in common_2as.items():
+            if subj_key not in CURRICULUM_DATA["2AS"][stream]["subjects"]:
+                CURRICULUM_DATA["2AS"][stream]["subjects"][subj_key] = subj_val
+
+# دمج المواد المشتركة في كل شعبة (3AS)
+for stream in ["math", "tech", "gestion", "lettres", "langues"]:
+    if stream in CURRICULUM_DATA["3AS"] and "subjects" in CURRICULUM_DATA["3AS"][stream]:
+        for subj_key, subj_val in common_3as.items():
+            if subj_key not in CURRICULUM_DATA["3AS"][stream]["subjects"]:
+                CURRICULUM_DATA["3AS"][stream]["subjects"][subj_key] = subj_val
+
+# استكمال مواد شعبة الآداب (التي تنقصها الرياضيات والعلوم)
+if "lettres" in CURRICULUM_DATA["2AS"]:
+    CURRICULUM_DATA["2AS"]["lettres"]["subjects"]["math"] = common_2as["math"]
+    CURRICULUM_DATA["2AS"]["lettres"]["subjects"]["islamic"] = common_2as["islamic"]
+if "lettres" in CURRICULUM_DATA["3AS"]:
+    CURRICULUM_DATA["3AS"]["lettres"]["subjects"]["math"] = common_3as["math"]
+    CURRICULUM_DATA["3AS"]["lettres"]["subjects"]["islamic"] = common_3as["islamic"]
+
+# استكمال مواد شعبة اللغات
+if "langues" in CURRICULUM_DATA["2AS"]:
+    CURRICULUM_DATA["2AS"]["langues"]["subjects"]["arabic"] = common_2as["arabic"]
+    CURRICULUM_DATA["2AS"]["langues"]["subjects"]["history"] = common_2as["history"]
+    CURRICULUM_DATA["2AS"]["langues"]["subjects"]["islamic"] = common_2as["islamic"]
+    CURRICULUM_DATA["2AS"]["langues"]["subjects"]["philosophy"] = common_2as["philosophy"]
+if "langues" in CURRICULUM_DATA["3AS"]:
+    CURRICULUM_DATA["3AS"]["langues"]["subjects"]["arabic"] = common_3as["arabic"]
+    CURRICULUM_DATA["3AS"]["langues"]["subjects"]["history"] = common_3as["history"]
+    CURRICULUM_DATA["3AS"]["langues"]["subjects"]["islamic"] = common_3as["islamic"]
+    CURRICULUM_DATA["3AS"]["langues"]["subjects"]["philosophy"] = common_3as["philosophy"]
