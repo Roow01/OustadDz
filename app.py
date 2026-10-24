@@ -74,10 +74,9 @@ def _get_or_create_summary(url: str, raw_text: str) -> str:
     if url in kb: return kb[url] 
     if not raw_text: return ""
     try:
-        # استخدام المفتاح الأول للتلخيص
         if GEMINI_API_KEY:
             genai.configure(api_key=GEMINI_API_KEY)
-            model = genai.GenerativeModel("gemini-1.5-flash")
+            model = genai.GenerativeModel("gemini-2.5-flash")
             sum_prompt = f"لخص هذا الدرس في نقاط واضحة (بدون نسخ النص الأصلي):\n{raw_text[:3000]}"
             res = model.generate_content(sum_prompt)
             summary = res.text
@@ -224,17 +223,20 @@ def _decode_image(b64: str) -> Image.Image:
     return Image.open(io.BytesIO(base64.b64decode(b64))).convert("RGB")
 
 def _call_groq(messages) -> str:
+    # استخدام نموذج Groq المستقر
     res = groq_client.chat.completions.create(model="llama-3.1-8b-instant", messages=messages, temperature=0.3, max_tokens=1024)
     return (res.choices[0].message.content or "").strip()
 
 def _call_gemini(contents, final_prompt, api_key) -> str:
     genai.configure(api_key=api_key)
-    model = genai.GenerativeModel(model_name="gemini-1.5-flash", system_instruction=final_prompt)
+    # استخدام أحدث نموذج Gemini
+    model = genai.GenerativeModel(model_name="gemini-2.5-flash", system_instruction=final_prompt)
     res = model.generate_content(contents)
     return (res.text or "").strip()
 
 def _call_openrouter(messages) -> str:
-    res = openrouter_client.chat.completions.create(model="openai/gpt-4o-mini", messages=messages, temperature=0.3, max_tokens=1024)
+    # استخدام نموذج مجاني لتجنب خطأ 402
+    res = openrouter_client.chat.completions.create(model="meta-llama/llama-3-8b-instruct:free", messages=messages, temperature=0.3, max_tokens=1024)
     return (res.choices[0].message.content or "").strip()
 
 @app.post("/chat", response_model=ChatResponse)
