@@ -28,11 +28,12 @@ from examdz_data import EXAMDZ_SECONDARY
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("OustadDz")
 
+# قراءة المفاتيح
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+GEMINI_API_KEY_2 = os.getenv("GEMINI_API_KEY_2", "")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 
-genai.configure(api_key=GEMINI_API_KEY)
 groq_client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
 openrouter_client = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=OPENROUTER_API_KEY) if OPENROUTER_API_KEY else None
 
@@ -73,14 +74,18 @@ def _get_or_create_summary(url: str, raw_text: str) -> str:
     if url in kb: return kb[url] 
     if not raw_text: return ""
     try:
-        model = genai.GenerativeModel("gemini-1.5-flash")
-        sum_prompt = f"لخص هذا الدرس في نقاط واضحة (بدون نسخ النص الأصلي):\n{raw_text[:3000]}"
-        res = model.generate_content(sum_prompt)
-        summary = res.text
-        kb[url] = summary
-        save_knowledge(kb)
-        return summary
-    except: return raw_text[:1000] 
+        # استخدام المفتاح الأول للتلخيص
+        if GEMINI_API_KEY:
+            genai.configure(api_key=GEMINI_API_KEY)
+            model = genai.GenerativeModel("gemini-1.5-flash")
+            sum_prompt = f"لخص هذا الدرس في نقاط واضحة (بدون نسخ النص الأصلي):\n{raw_text[:3000]}"
+            res = model.generate_content(sum_prompt)
+            summary = res.text
+            kb[url] = summary
+            save_knowledge(kb)
+            return summary
+    except: pass
+    return raw_text[:1000] 
 
 def _fetch_web_content(url: str) -> str:
     if not url: return ""
@@ -222,7 +227,8 @@ def _call_groq(messages) -> str:
     res = groq_client.chat.completions.create(model="llama-3.1-8b-instant", messages=messages, temperature=0.3, max_tokens=1024)
     return (res.choices[0].message.content or "").strip()
 
-def _call_gemini(contents, final_prompt) -> str:
+def _call_gemini(contents, final_prompt, api_key) -> str:
+    genai.configure(api_key=api_key)
     model = genai.GenerativeModel(model_name="gemini-1.5-flash", system_instruction=final_prompt)
     res = model.generate_content(contents)
     return (res.text or "").strip()
@@ -238,7 +244,6 @@ def chat(req: ChatRequest):
     final_prompt, query_type = _build_smart_prompt(req.message, req.history if req.history else [])
     messages = [{"role": "system", "content": final_prompt}]
     
-    # إرسال آخر رسالة واحدة فقط لتوفير الرموز
     if req.history:
         for msg in req.history[-1:]: messages.append({"role": msg.role, "content": msg.content})
     
@@ -246,24 +251,32 @@ def chat(req: ChatRequest):
         messages.append({"role": "user", "content": [{"type": "text", "text": req.message}, {"type": "image_url", "image_url": {"url": req.image_base64}}]})
     else: messages.append({"role": "user", "content": req.message})
 
-    # 1. المحاولة بـ Gemini أولاً (لأن حصته المجانية ضخمة جداً)
+    # تحويل الرسائل لتناسب Gemini
+    gemini_contents = []
+    for m in messages[1:]:
+        if isinstance(m["content"], str): gemini_contents.append({"role": "user", "parts": [m["content"]]})
+        else: 
+            parts = [{"text": p["text"]} if p["type"]=="text" else _decode_image(p["image_url"]["url"]) for p in m["content"]]
+            gemini_contents.append({"role": "user", "parts": parts})
+
+    # 1. المحاولة بـ Gemini المفتاح الأول
     if GEMINI_API_KEY:
         try: 
-            contents = []
-            for m in messages[1:]:
-                if isinstance(m["content"], str): contents.append({"role": "user", "parts": [m["content"]]})
-                else: 
-                    parts = [{"text": p["text"]} if p["type"]=="text" else _decode_image(p["image_url"]["url"]) for p in m["content"]]
-                    contents.append({"role": "user", "parts": parts})
-            return ChatResponse(reply=_call_gemini(contents, final_prompt))
-        except Exception as e: logger.warning(f"Gemini failed: {e}")
+            return ChatResponse(reply=_call_gemini(gemini_contents, final_prompt, GEMINI_API_KEY))
+        except Exception as e: logger.warning(f"Gemini Key 1 failed: {e}")
 
-    # 2. المحاولة بـ Groq
+    # 2. المحاولة بـ Gemini المفتاح الثاني (الجديد)
+    if GEMINI_API_KEY_2:
+        try: 
+            return ChatResponse(reply=_call_gemini(gemini_contents, final_prompt, GEMINI_API_KEY_2))
+        except Exception as e: logger.warning(f"Gemini Key 2 failed: {e}")
+
+    # 3. المحاولة بـ Groq
     if GROQ_API_KEY:
         try: return ChatResponse(reply=_call_groq(messages))
         except Exception as e: logger.warning(f"Groq failed: {e}")
         
-    # 3. المحاولة بـ OpenRouter
+    # 4. المحاولة بـ OpenRouter
     if OPENROUTER_API_KEY:
         try: return ChatResponse(reply=_call_openrouter(messages))
         except Exception as e: logger.warning(f"OpenRouter failed: {e}")
