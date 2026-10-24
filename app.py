@@ -37,7 +37,22 @@ groq_client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
 openrouter_client = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=OPENROUTER_API_KEY) if OPENROUTER_API_KEY else None
 
 # =========================================================
-# نظام التعلم الذاتي (Knowledge Cache)
+# 1. تعريف الكلاسات (تم نقلها للأعلى لتجنب خطأ NameError)
+# =========================================================
+class ChatMessage(BaseModel):
+    role: str
+    content: str
+
+class ChatRequest(BaseModel):
+    message: str
+    image_base64: Optional[str] = None
+    history: Optional[List[ChatMessage]] = None
+
+class ChatResponse(BaseModel):
+    reply: str
+
+# =========================================================
+# 2. نظام التعلم الذاتي (Knowledge Cache)
 # =========================================================
 KB_FILE = "knowledge_cache.json"
 
@@ -100,13 +115,12 @@ def _get_latest_news(query: str = None) -> str:
     except Exception: return "تعذر جلب الأخبار."
 
 # =========================================================
-# الرادار الذكي (تم تحديثه ليكون أذكى)
+# 3. استخراج البيانات
 # =========================================================
 def _extract_requested_data(msg: str):
     msg = msg.lower()
     year, stream, subject = None, None, None
     
-    # تعرف على السنة (أضفنا "سنة 3" و "3 ثانوي")
     if any(w in msg for w in ["أولى", "اولى", "1as", "1 as", "سنة 1", "1 ثانوي"]): year = "1AS"
     elif any(w in msg for w in ["ثانية", "2as", "2 as", "سنة 2", "2 ثانوي"]): year = "2AS"
     elif any(w in msg for w in ["ثالثة", "ثالثه", "3as", "3 as", "سنة 3", "3 ثانوي"]): year = "3AS"
@@ -138,7 +152,7 @@ def _extract_requested_data(msg: str):
     return year, stream, subject
 
 # =========================================================
-# بناء البرومبت (مع السياق الذكي)
+# 4. بناء البرومبت
 # =========================================================
 def _build_smart_prompt(message: str, history: List[ChatMessage]):
     base_rules = """أنت "OustadDz" (أستاذ Dz)، مرافق التعليم الثانوي الجزائري.
@@ -157,10 +171,9 @@ def _build_smart_prompt(message: str, history: List[ChatMessage]):
     
     if is_edu:
         query_type = "educational"
-        # 1. نحاول استخراج البيانات من الرسالة الحالية
         year, stream, subject = _extract_requested_data(msg_lower)
         
-        # 2. إذا لم نجدها، نبحث في سجل المحادثة (الرسائل السابقة)
+        # السياق من الرسائل السابقة إذا لم يحدد
         if not (year and stream and subject) and history:
             for old_msg in reversed(history):
                 if old_msg.role == 'user':
@@ -168,10 +181,9 @@ def _build_smart_prompt(message: str, history: List[ChatMessage]):
                     if y: year = y
                     if s: stream = s
                     if sub: subject = sub
-                    if year and stream and subject: break # وجدنا كل شيء
+                    if year and stream and subject: break
 
         if year and stream and subject:
-            # الفهرس الرسمي
             curr_index = ""
             if year in CURRICULUM_DATA and stream in CURRICULUM_DATA[year] and "subjects" in CURRICULUM_DATA[year][stream]:
                 if subject in CURRICULUM_DATA[year][stream]["subjects"]:
@@ -179,7 +191,6 @@ def _build_smart_prompt(message: str, history: List[ChatMessage]):
                     index_info = {"content": subj_data.get("content", ""), "distribution": subj_data.get("distribution", {})}
                     curr_index = json.dumps(index_info, ensure_ascii=False, separators=(',', ':'))
             
-            # محتوى الرابط
             url = ""
             if year in EXAMDZ_SECONDARY and stream in EXAMDZ_SECONDARY[year]:
                 url = EXAMDZ_SECONDARY[year][stream].get(subject, "")
@@ -206,18 +217,8 @@ def _build_smart_prompt(message: str, history: List[ChatMessage]):
     return base_rules + context, query_type
 
 # =========================================================
-# المحركات والنشر
+# 5. المحركات والنشر
 # =========================================================
-class ChatMessage(BaseModel):
-    role: str
-    content: str
-class ChatRequest(BaseModel):
-    message: str
-    image_base64: Optional[str] = None
-    history: Optional[List[ChatMessage]] = None
-class ChatResponse(BaseModel):
-    reply: str
-
 app = FastAPI(title="OustadDz API")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=False, allow_methods=["*"], allow_headers=["*"])
 
@@ -242,7 +243,6 @@ def _call_openrouter(messages) -> str:
 def chat(req: ChatRequest):
     if not req.message and not req.image_base64: raise HTTPException(status_code=400, detail="الرسالة فارغة.")
     
-    # تمرير الـ history للدالة لكي تستفيد منه في استخراج السياق
     final_prompt, query_type = _build_smart_prompt(req.message, req.history if req.history else [])
     messages = [{"role": "system", "content": final_prompt}]
     
