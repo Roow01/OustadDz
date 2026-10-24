@@ -22,7 +22,6 @@ import google.generativeai as genai
 from groq import Groq
 from openai import OpenAI
 
-# استدعاء الملفات
 from curriculum_data import CURRICULUM_DATA
 from examdz_data import EXAMDZ_SECONDARY
 
@@ -38,7 +37,7 @@ groq_client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
 openrouter_client = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=OPENROUTER_API_KEY) if OPENROUTER_API_KEY else None
 
 # =========================================================
-# 1. نظام التعلم الذاتي (Knowledge Cache)
+# نظام التعلم الذاتي (Knowledge Cache)
 # =========================================================
 KB_FILE = "knowledge_cache.json"
 
@@ -56,20 +55,17 @@ def save_knowledge(data):
 
 def _get_or_create_summary(url: str, raw_text: str) -> str:
     kb = load_knowledge()
-    if url in kb: return kb[url] # إذا كان محفوظاً، لا نستهلك شيئاً
+    if url in kb: return kb[url] 
     if not raw_text: return ""
-    
     try:
-        # نستخدم Gemini لتلخيص النص (لأنه يتحمل النصوص الطويلة مجاناً)
         model = genai.GenerativeModel("gemini-1.5-flash")
         sum_prompt = f"لخص هذا الدرس في نقاط واضحة (بدون نسخ النص الأصلي):\n{raw_text[:4000]}"
         res = model.generate_content(sum_prompt)
         summary = res.text
-        
         kb[url] = summary
         save_knowledge(kb)
         return summary
-    except: return raw_text[:1500] # احتياطي
+    except: return raw_text[:1500] 
 
 def _fetch_web_content(url: str) -> str:
     if not url: return ""
@@ -77,13 +73,11 @@ def _fetch_web_content(url: str) -> str:
         headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
         res = requests.get(url, headers=headers, timeout=10)
         soup = BeautifulSoup(res.text, 'html.parser')
-        
         pdf_link = None
         for a_tag in soup.find_all('a', href=True):
             if a_tag['href'].endswith('.pdf'):
                 pdf_link = urljoin(url, a_tag['href'])
                 break
-        
         if pdf_link:
             try:
                 pdf_res = requests.get(pdf_link, headers=headers, timeout=15)
@@ -91,9 +85,8 @@ def _fetch_web_content(url: str) -> str:
                 extracted = "".join([p.extract_text() for p in reader.pages[:5] if p.extract_text()])
                 if extracted.strip(): return extracted
             except: pass
-            
         for script in soup(["script", "style"]): script.decompose()
-        return soup.get_text(separator=' ', strip=True)[:3000] # تقليل الحجم
+        return soup.get_text(separator=' ', strip=True)[:3000]
     except Exception: return ""
 
 def _get_latest_news(query: str = None) -> str:
@@ -107,27 +100,16 @@ def _get_latest_news(query: str = None) -> str:
     except Exception: return "تعذر جلب الأخبار."
 
 # =========================================================
-# 2. الفهرس الذكي (توفير الحصة)
+# الرادار الذكي (تم تحديثه ليكون أذكى)
 # =========================================================
-def _get_curriculum_index(year: str, stream: str, subject: str) -> str:
-    """يسترجع فقط عناوين الدروس (وليس الشرح الكامل) لتوفير الرموز"""
-    try:
-        subj_data = CURRICULUM_DATA[year][stream]["subjects"][subject]
-        # نأخذ المحتوى والتوزيع فقط، ونتجاهل الأهداف والكتب لتوفير المساحة
-        index_info = {
-            "content": subj_data.get("content", ""),
-            "distribution": subj_data.get("distribution", {})
-        }
-        return json.dumps(index_info, ensure_ascii=False, separators=(',', ':'))
-    except KeyError:
-        return ""
-
 def _extract_requested_data(msg: str):
     msg = msg.lower()
     year, stream, subject = None, None, None
-    if any(w in msg for w in ["أولى", "اولى", "1as", "1 as"]): year = "1AS"
-    elif any(w in msg for w in ["ثانية", "2as", "2 as"]): year = "2AS"
-    elif any(w in msg for w in ["ثالثة", "ثالثه", "3as", "3 as"]): year = "3AS"
+    
+    # تعرف على السنة (أضفنا "سنة 3" و "3 ثانوي")
+    if any(w in msg for w in ["أولى", "اولى", "1as", "1 as", "سنة 1", "1 ثانوي"]): year = "1AS"
+    elif any(w in msg for w in ["ثانية", "2as", "2 as", "سنة 2", "2 ثانوي"]): year = "2AS"
+    elif any(w in msg for w in ["ثالثة", "ثالثه", "3as", "3 as", "سنة 3", "3 ثانوي"]): year = "3AS"
 
     if year == "1AS":
         if any(w in msg for w in ["علوم", "science"]): stream = "sciences"
@@ -156,32 +138,48 @@ def _extract_requested_data(msg: str):
     return year, stream, subject
 
 # =========================================================
-# 3. بناء البرومبت
+# بناء البرومبت (مع السياق الذكي)
 # =========================================================
-def _build_smart_prompt(message: str):
+def _build_smart_prompt(message: str, history: List[ChatMessage]):
     base_rules = """أنت "OustadDz" (أستاذ Dz)، مرافق التعليم الثانوي الجزائري.
 ⚠️ هويتك: لا تذكر من صممك إلا إذا سُئلت: "تم تطويري بواسطة Qimah Production بإشراف الباحث مانة رضوان".
 ⚠️ التزم بترتيب المنهاج الرسمي المرفق، ولا تعتمد على ترتيب الروابط.
-تتصرف كذكاء عام للدردشة.
 """
     msg_lower = message.lower()
     is_greeting = any(w in msg_lower for w in ["مرحبا", "أهلا", "سلام", "hello", "hi", "bonjour"])
     is_news = any(w in msg_lower for w in ["أخبار", "خبر", "اليوم", "news"])
-    is_edu = any(w in msg_lower for w in ["درس", "شرح", "تمرين", "حل", "رياضيات", "فيزياء", "علوم", "فلسفة", "لغة", "تاريخ", "math", "physique", "1as", "2as", "3as", "أولى", "ثانية", "ثالثة", "فروض", "اختبارات", "كتاب"])
+    is_edu = any(w in msg_lower for w in ["درس", "شرح", "تمرين", "حل", "رياضيات", "فيزياء", "علوم", "فلسفة", "لغة", "تاريخ", "math", "physique", "1as", "2as", "3as", "أولى", "ثانية", "ثالثة", "فروض", "اختبارات", "كتاب", "محاور", "خلاصة"])
 
     context = ""
-    query_type = "general" # نوع الطلب (لتوجيهه للمحرك المناسب)
+    query_type = "general"
     
     if is_news: context += f"\n[أخبار اليوم]:\n{_get_latest_news()}\n"
     
     if is_edu:
-        query_type = "educational" # تعليمي (يحتاج محركاً يتحمل النصوص)
+        query_type = "educational"
+        # 1. نحاول استخراج البيانات من الرسالة الحالية
         year, stream, subject = _extract_requested_data(msg_lower)
+        
+        # 2. إذا لم نجدها، نبحث في سجل المحادثة (الرسائل السابقة)
+        if not (year and stream and subject) and history:
+            for old_msg in reversed(history):
+                if old_msg.role == 'user':
+                    y, s, sub = _extract_requested_data(old_msg.content.lower())
+                    if y: year = y
+                    if s: stream = s
+                    if sub: subject = sub
+                    if year and stream and subject: break # وجدنا كل شيء
+
         if year and stream and subject:
-            # 1. الفهرس الرسمي (صغير جداً)
-            curr_index = _get_curriculum_index(year, stream, subject)
+            # الفهرس الرسمي
+            curr_index = ""
+            if year in CURRICULUM_DATA and stream in CURRICULUM_DATA[year] and "subjects" in CURRICULUM_DATA[year][stream]:
+                if subject in CURRICULUM_DATA[year][stream]["subjects"]:
+                    subj_data = CURRICULUM_DATA[year][stream]["subjects"][subject]
+                    index_info = {"content": subj_data.get("content", ""), "distribution": subj_data.get("distribution", {})}
+                    curr_index = json.dumps(index_info, ensure_ascii=False, separators=(',', ':'))
             
-            # 2. محتوى الرابط (من الكاش أو الموقع)
+            # محتوى الرابط
             url = ""
             if year in EXAMDZ_SECONDARY and stream in EXAMDZ_SECONDARY[year]:
                 url = EXAMDZ_SECONDARY[year][stream].get(subject, "")
@@ -189,19 +187,16 @@ def _build_smart_prompt(message: str):
             scraped_content = ""
             if url:
                 kb = load_knowledge()
-                if url in kb:
-                    scraped_content = kb[url] # من الكاش (بدون استهلاك)
+                if url in kb: scraped_content = kb[url] 
                 else:
                     raw_text = _fetch_web_content(url)
                     scraped_content = _get_or_create_summary(url, raw_text)
 
-            context += f"\n[الفهرس الرسمي]:\n{curr_index}\n"
+            context += f"\n[الفهرس الرسمي المعتمد من الوزارة]:\n{curr_index}\n"
             if scraped_content:
-                context += f"\n[محتوى تفصيلي]:\n{scraped_content}\n"
+                context += f"\n[محتوى تفصيلي مسحوب]:\n{scraped_content}\n"
             
-            context += "\nتنبيه: أجب عن سؤال الطالب بدقة، والتزم بتسلسل الفهرس الرسمي."
-        elif year and stream:
-            context += "\n[تنبيه]: المستخدم حدد السنة والشعبة، لكنه لم يحدد المادة. اسأله عن المادة."
+            context += "\nتنبيه: أجب عن سؤال الطالب بدقة، والتزم حرفياً بالفهرس الرسمي المرفق (خاصة إذا سأل عن الدرس الأول أو المحاور)."
         else:
             context += "\n[تنبيه]: لم يحدد (السنة والشعبة). اسأله عنها أولاً بذكاء."
 
@@ -211,7 +206,7 @@ def _build_smart_prompt(message: str):
     return base_rules + context, query_type
 
 # =========================================================
-# 4. استدعاء المحركات
+# المحركات والنشر
 # =========================================================
 class ChatMessage(BaseModel):
     role: str
@@ -247,7 +242,8 @@ def _call_openrouter(messages) -> str:
 def chat(req: ChatRequest):
     if not req.message and not req.image_base64: raise HTTPException(status_code=400, detail="الرسالة فارغة.")
     
-    final_prompt, query_type = _build_smart_prompt(req.message)
+    # تمرير الـ history للدالة لكي تستفيد منه في استخراج السياق
+    final_prompt, query_type = _build_smart_prompt(req.message, req.history if req.history else [])
     messages = [{"role": "system", "content": final_prompt}]
     
     if req.history:
@@ -257,7 +253,6 @@ def chat(req: ChatRequest):
         messages.append({"role": "user", "content": [{"type": "text", "text": req.message}, {"type": "image_url", "image_url": {"url": req.image_base64}}]})
     else: messages.append({"role": "user", "content": req.message})
 
-    # التوجيه الذكي: تعليمي -> Gemini أولاً | عام/أخبار -> Groq أولاً
     if query_type == "educational":
         if GEMINI_API_KEY:
             try: 
@@ -270,7 +265,6 @@ def chat(req: ChatRequest):
                 return ChatResponse(reply=_call_gemini(contents, final_prompt))
             except Exception as e: logger.warning(f"Gemini failed: {e}")
             
-    # إذا لم يكن تعليمياً، أو فشل Gemini:
     if GROQ_API_KEY:
         try: return ChatResponse(reply=_call_groq(messages))
         except Exception as e: logger.warning(f"Groq failed: {e}")
